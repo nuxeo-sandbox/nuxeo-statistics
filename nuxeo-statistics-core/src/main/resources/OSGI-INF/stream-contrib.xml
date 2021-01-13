@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="org.nuxeo.statistics.stream.contrib" version="1.0">
+    <extension point="streamProcessor" target="org.nuxeo.runtime.stream.service">
+        <streamProcessor name="statistics" class="org.nuxeo.statistics.stream.StatisticsProcessor">
+            <policy name="default" maxRetries="0" continueOnFailure="true" />
+            <stream name="input/null" partitions="1" codec="avro" />
+            <computation name="statistics" concurrency="1" />
+        </streamProcessor>
+    </extension>
+
+</component>

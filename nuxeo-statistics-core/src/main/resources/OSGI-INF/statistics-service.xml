@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="org.nuxeo.statistics.service" version="1.0">
+
+    <documentation>
+        This component allows to register computers to precompute statistics.
+    </documentation>
+
+    <implementation class="org.nuxeo.statistics.StatisticsServiceImpl" />
+
+    <service>
+        <provide interface="org.nuxeo.statistics.StatisticsService" />
+    </service>
+
+    <extension-point name="computers">
+        <object class="org.nuxeo.statistics.StatisticsComputer" />
+    </extension-point>
+
+</component>
