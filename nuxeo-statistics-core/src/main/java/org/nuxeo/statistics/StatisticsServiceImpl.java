@@ -50,7 +50,16 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
     public List<StatisticsComputer> getComputers() {
         return getRegistryContributions(XP_COMPUTERS);
     }
-
+    
+    @Override
+    public StatisticsComputer getComputer(String computerName) {	
+    	 Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
+         if (optComputer.isPresent()) {
+        	 return optComputer.get();
+         }
+         return null;
+    }
+    
     @Override
     public void computeStatistics(String computerName) {
         Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);

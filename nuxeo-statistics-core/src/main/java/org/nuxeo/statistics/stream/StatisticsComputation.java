@@ -50,7 +50,7 @@ public class StatisticsComputation extends AbstractComputation {
     @Override
     public void init(ComputationContext context) {
         if (!context.isSpareComputation()) {
-            log.warn("Instance elected to report statistics");
+            log.warn("Instance elected to report statistics with interval " + intervalMs);
             context.setTimer("timer", System.currentTimeMillis() + intervalMs);
         }
     }

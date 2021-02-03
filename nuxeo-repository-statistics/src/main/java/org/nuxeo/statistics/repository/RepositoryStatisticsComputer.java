@@ -22,15 +22,5 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class RepositoryStatisticsComputer implements Supplier<Map<String, Long>> {
-    public abstract long getTotalDocuments();
-
-    public abstract long getDeletedDocuments();
-
-    @Override
-    public Map<String, Long> get() {
-        return Map.of(
-                "documents.total", getTotalDocuments(),
-                "documents.deleted", getDeletedDocuments()
-        );
-    }
+   
 }

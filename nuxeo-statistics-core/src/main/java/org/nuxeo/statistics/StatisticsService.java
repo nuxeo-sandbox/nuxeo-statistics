@@ -25,6 +25,8 @@ import java.util.List;
  */
 public interface StatisticsService {
 
+	StatisticsComputer getComputer(String name);
+	
     List<StatisticsComputer> getComputers();
 
     void computeStatistics(String computer);
