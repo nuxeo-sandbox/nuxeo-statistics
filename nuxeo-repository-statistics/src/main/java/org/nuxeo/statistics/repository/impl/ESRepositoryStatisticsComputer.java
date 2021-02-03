@@ -31,8 +31,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.Sum;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.nuxeo.ecm.core.api.repository.RepositoryManager;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
@@ -72,10 +74,11 @@ public class ESRepositoryStatisticsComputer extends RepositoryStatisticsComputer
 			for (String type : count.keySet()) {
 				total+=count.get(type);
 			}
-			count.put(getMetricName(repositoryName, "Total"), total);	
-			
+			count.put(getMetricName(DOCCOUNT, repositoryName, "Total"), total);				
 			metrics.putAll(count);
-
+			
+			Map<String, Long> size = getBlobSize(repositoryName);
+			metrics.putAll(size);
 		}
 		return metrics;
 	}
@@ -94,7 +97,7 @@ public class ESRepositoryStatisticsComputer extends RepositoryStatisticsComputer
 		return new SearchRequest(getESIndexName(repositoryName)).searchType(SearchType.DFS_QUERY_THEN_FETCH);
 	}
 
-	private Map<String, Long> getCountsPerDocTypes(String repositoryName) {
+	protected Map<String, Long> getCountsPerDocTypes(String repositoryName) {
 
 		Map<String, Long> ret = new LinkedHashMap<>();
 		SearchRequest searchRequest = searchRequest(repositoryName);
@@ -111,17 +114,46 @@ public class ESRepositoryStatisticsComputer extends RepositoryStatisticsComputer
 
 			Terms terms = response.getAggregations().get("primaryType");
 			for (Terms.Bucket term : terms.getBuckets()) {
-				ret.put(getMetricName(repositoryName, term.getKeyAsString()), term.getDocCount());
+				ret.put(getMetricName(DOCCOUNT, repositoryName, term.getKeyAsString()), term.getDocCount());
 			}
-			//long count = response.getHits().getTotalHits().value;
 		} catch (Exception e) {
 			log.error("Failed to get Type Cardinality", e);
 		}
 		return ret;
 	}
 	
-	protected String getMetricName(String repository, String aggregateName) {
-		return "docCount." + repository + "." + aggregateName;
+	
+
+	protected Map<String, Long> getBlobSize(String repositoryName) {
+
+		Map<String, Long> ret = new LinkedHashMap<>();
+		SearchRequest searchRequest = searchRequest(repositoryName);
+		BoolQueryBuilder boolq = QueryBuilders.boolQuery();
+		EXCLUDED_TYPES.forEach(lang -> {
+			boolq.mustNot(QueryBuilders.termQuery("ecm:primaryType", lang));
+		});
+		
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(0)
+				.query(boolq.mustNot(QueryBuilders.termQuery("ecm:isProxy", "true")))
+				.aggregation(
+						AggregationBuilders.sum("blobSize").field("file:content.length"));
+		searchRequest.source(sourceBuilder);
+		try {
+			SearchResponse response = getClient().search(searchRequest);
+			Sum sum = response.getAggregations().get("blobSize");
+			ret.put(getMetricName(BLOBVOLUME, repositoryName, "mainBlobs"), (long) sum.getValue());			
+		} catch (Exception e) {
+			log.error("Failed to get Type Cardinality", e);
+		}
+		return ret;
+	}
+
+	protected static String DOCCOUNT = "docCount";
+	protected static String BLOBVOLUME = "blobVolume";
+	
+	
+	protected String getMetricName(String metricType, String repository, String aggregateName) {
+		return  repository + "." + metricType + "." +  aggregateName;
 	}
 
 }

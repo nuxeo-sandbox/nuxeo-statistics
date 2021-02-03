@@ -8,6 +8,8 @@ import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRI
 import java.io.Serializable;
 import java.util.SortedMap;
 
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.ecm.core.api.Blob;
@@ -18,6 +20,7 @@ import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
 import org.nuxeo.ecm.core.api.repository.RepositoryManager;
 import org.nuxeo.ecm.core.event.EventService;
 import org.nuxeo.ecm.core.event.EventServiceAdmin;
+import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
 import org.nuxeo.elasticsearch.test.RepositoryElasticSearchFeature;
@@ -44,14 +47,6 @@ import io.dropwizard.metrics5.SharedMetricRegistries;
 @Features({RuntimeStreamFeature.class, RepositoryElasticSearchFeature.class})
 @Deploy({"org.nuxeo.statistics.core","org.nuxeo.statistics.repository.test:test-metrics-contrib.xml"})
 public class TestRepositoryStats {
-
-	//@Test
-	public void stupid() {
-		
-		ESRepositoryStatisticsComputer computer = new ESRepositoryStatisticsComputer();
-		
-		
-	}
 	
 	@Inject
 	protected CoreSession session;
@@ -61,6 +56,9 @@ public class TestRepositoryStats {
 	
 	@Inject
 	protected ElasticSearchService ess;
+	
+	@Inject
+	protected ElasticSearchAdmin esa;
 	
 	protected void addSomeContent() throws Exception {
 		
@@ -76,6 +74,14 @@ public class TestRepositoryStats {
 		
 		file = session.createDocument(file);
 
+		DocumentModel file2 = session.createDocumentModel(folder.getPathAsString(), "file2", "File");		
+		file2.setPropertyValue("dc:title", "File2");
+		Blob blob2 = new StringBlob("01234", "text/plain", "UTF-8");
+		blob2.setFilename("SampleFile2.txt");
+		file2.setPropertyValue("file:content", (Serializable) blob2);
+		
+		file2 = session.createDocument(file2);
+
 		
 		session.save();
 		TransactionHelper.commitOrRollbackTransaction();
@@ -87,6 +93,7 @@ public class TestRepositoryStats {
 		NxQueryBuilder queryBuilder = new NxQueryBuilder(session).nxql("Select * from Document");
 		DocumentModelList allDocs = ess.query(queryBuilder);		
 		assertNotEquals(0, allDocs.size());
+				
 	}
 	
 	
@@ -115,15 +122,17 @@ public class TestRepositoryStats {
 		
 		for (MetricName mn : gauges.keySet()) {
 			if (mn.toString().endsWith(".File")) {
-				assertEquals(1L,gauges.get(mn).getValue());
+				assertEquals(2L,gauges.get(mn).getValue());
 			}
 			if (mn.toString().endsWith(".Folder")) {
 				assertEquals(1L,gauges.get(mn).getValue());
 			}
 			if (mn.toString().endsWith(".Total")) {
-				assertEquals(2L,gauges.get(mn).getValue());
+				assertEquals(3L,gauges.get(mn).getValue());
 			}
-			
+			if (mn.toString().endsWith(".mainBlobs")) {
+				assertEquals(15L,gauges.get(mn).getValue());
+			}
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
 		

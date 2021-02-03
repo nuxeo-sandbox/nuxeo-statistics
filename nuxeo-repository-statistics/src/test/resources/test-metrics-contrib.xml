@@ -2,7 +2,7 @@
 <component name="org.nuxeo.statistics.repository.computers.test.contrib" version="1.0">
 
     <extension point="computers" target="org.nuxeo.statistics.service">
-        <computer name="repository" interval="5s" class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
+    	<computer name="repository" interval="5s" class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
     </extension>
 
 
