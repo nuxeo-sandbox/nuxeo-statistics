@@ -25,7 +25,9 @@ import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.kv.KeyValueService;
 import org.nuxeo.runtime.kv.KeyValueStore;
+import org.nuxeo.runtime.model.ComponentInstance;
 import org.nuxeo.runtime.model.DefaultComponent;
+import org.nuxeo.runtime.model.Descriptor;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,11 +50,12 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
 
     @Override
     public List<StatisticsComputer> getComputers() {
-        return getRegistryContributions(XP_COMPUTERS);
+    	return (List<StatisticsComputer>) (Object) getRegistry().getDescriptors(name, XP_COMPUTERS);  	 	
     }
     
     @Override
     public StatisticsComputer getComputer(String computerName) {	
+    	 
     	 Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
          if (optComputer.isPresent()) {
         	 return optComputer.get();
@@ -61,7 +64,25 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
     }
     
     @Override
+    protected boolean register(String xp, Descriptor descriptor) {
+        return getRegistry().register(name, xp, descriptor);
+    }
+    
+    @Override
+    public void registerContribution(Object contribution, String xp, ComponentInstance component) {
+        if (contribution instanceof Descriptor) {
+            register(xp, (Descriptor) contribution);
+        }
+    }
+    
+    protected Optional<StatisticsComputer> getRegistryContribution(String xp, String contribName) { 	
+    	StatisticsComputer optComputer= getRegistry().getDescriptor(name, XP_COMPUTERS, contribName);  	
+    	return Optional.ofNullable(optComputer);
+    }
+    
+    @Override
     public void computeStatistics(String computerName) {
+    	
         Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
         if (optComputer.isPresent()) {
             StatisticsComputer computer = optComputer.get();

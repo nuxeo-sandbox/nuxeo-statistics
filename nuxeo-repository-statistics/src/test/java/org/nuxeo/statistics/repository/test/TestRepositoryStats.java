@@ -10,6 +10,11 @@ import java.util.SortedMap;
 
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.nuxeo.ecm.core.api.Blob;
@@ -45,8 +50,29 @@ import io.dropwizard.metrics5.SharedMetricRegistries;
 
 @RunWith(FeaturesRunner.class)
 @Features({RuntimeStreamFeature.class, RepositoryElasticSearchFeature.class})
+@Deploy("org.nuxeo.ecm.platform.audit.api")
+@Deploy("org.nuxeo.ecm.platform.audit")
+@Deploy("org.nuxeo.ecm.platform.uidgen.core")
+@Deploy("org.nuxeo.elasticsearch.core")
+@Deploy("org.nuxeo.elasticsearch.seqgen")
+@Deploy("org.nuxeo.statistics.repository.test:elasticsearch-seqgen-index-test-contrib.xml")
+@Deploy("org.nuxeo.statistics.repository.test:elasticsearch-audit-index-test-contrib.xml")
+@Deploy("org.nuxeo.elasticsearch.audit")
 @Deploy({"org.nuxeo.statistics.core","org.nuxeo.statistics.repository.test:test-metrics-contrib.xml"})
 public class TestRepositoryStats {
+
+	//@Test
+	public void stupid() throws Exception{
+		addSomeContent();
+	
+		SearchRequest req = new SearchRequest("audit");		
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20).
+				query(QueryBuilders.matchAllQuery());
+		req.source(sourceBuilder);
+		SearchResponse response = esa.getClient().search(req);
+		System.out.println(response.toString());
+		System.out.println(" #events= " + response.getHits().getTotalHits().value);
+	}
 	
 	@Inject
 	protected CoreSession session;
@@ -83,17 +109,19 @@ public class TestRepositoryStats {
 		file2 = session.createDocument(file2);
 
 		
+		file2.setPropertyValue("dc:description", "Modified");
+		file2 = session.saveDocument(file2);
+		
 		session.save();
 		TransactionHelper.commitOrRollbackTransaction();
 		TransactionHelper.startTransaction();
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 		eventService.waitForAsyncCompletion();
 
 		// ensure indexed
 		NxQueryBuilder queryBuilder = new NxQueryBuilder(session).nxql("Select * from Document");
 		DocumentModelList allDocs = ess.query(queryBuilder);		
 		assertNotEquals(0, allDocs.size());
-				
 	}
 	
 	
@@ -104,10 +132,12 @@ public class TestRepositoryStats {
 		
 		StatisticsComputer computer = stats.getComputer("repository");
 		assertNotNull(computer);
-		
+		StatisticsComputer auditComputer = stats.getComputer("audit");
+		assertNotNull(auditComputer);
+				
 		addSomeContent();
 		
-		Thread.sleep(10000);
+		Thread.sleep(5000);
 		
 		MetricRegistry registry = SharedMetricRegistries.getOrCreate(NUXEO_METRICS_REGISTRY_NAME);
 
@@ -118,23 +148,38 @@ public class TestRepositoryStats {
 			}
 		};
 		
-		SortedMap<MetricName, Gauge<?> > gauges = registry.getGauges(filter);
+		SortedMap<MetricName, Gauge > gauges = registry.getGauges(filter);
 		
+		
+		int foundMetrics=0;
 		for (MetricName mn : gauges.keySet()) {
 			if (mn.toString().endsWith(".File")) {
 				assertEquals(2L,gauges.get(mn).getValue());
+				foundMetrics++;
 			}
 			if (mn.toString().endsWith(".Folder")) {
 				assertEquals(1L,gauges.get(mn).getValue());
+				foundMetrics++;
 			}
 			if (mn.toString().endsWith(".Total")) {
 				assertEquals(3L,gauges.get(mn).getValue());
+				foundMetrics++;
 			}
 			if (mn.toString().endsWith(".mainBlobs")) {
 				assertEquals(15L,gauges.get(mn).getValue());
+				foundMetrics++;
 			}
+			if (mn.toString().endsWith(".documentCreated")) {
+				assertEquals(3L,gauges.get(mn).getValue());
+				foundMetrics++;
+			}
+			if (mn.toString().endsWith(".documentModified")) {
+				assertEquals(1L,gauges.get(mn).getValue());
+				foundMetrics++;
+			}			
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
+		assertEquals(6, foundMetrics);
 		
 	}
 	

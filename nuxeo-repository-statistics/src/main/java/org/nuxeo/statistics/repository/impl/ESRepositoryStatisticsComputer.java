@@ -15,6 +15,7 @@
  *
  * Contributors:
  *      Nelson Silva
+ *      Tiry
  */
 package org.nuxeo.statistics.repository.impl;
 

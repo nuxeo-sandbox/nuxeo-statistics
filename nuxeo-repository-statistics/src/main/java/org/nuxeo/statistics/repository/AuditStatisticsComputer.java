@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  * Contributors:
- *      Nelson Silva
  *      Tiry
  */
 package org.nuxeo.statistics.repository;
@@ -22,6 +21,6 @@ package org.nuxeo.statistics.repository;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public abstract class RepositoryStatisticsComputer implements Supplier<Map<String, Long>> {
+public abstract class AuditStatisticsComputer implements Supplier<Map<String, Long>> {
    
 }

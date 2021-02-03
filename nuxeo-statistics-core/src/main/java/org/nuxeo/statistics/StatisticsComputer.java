@@ -20,21 +20,18 @@ package org.nuxeo.statistics;
 
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XObject;
-import org.nuxeo.common.xmap.registry.XRegistry;
-import org.nuxeo.common.xmap.registry.XRegistryId;
+import org.nuxeo.runtime.model.Descriptor;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Supplier;
 
 @XObject(value = "computer")
-@XRegistry
-public class StatisticsComputer implements Supplier<Map<String, Long>> {
+public class StatisticsComputer implements Supplier<Map<String, Long>>, Descriptor {
 
     public static final Duration DEFAULT_INTERVAL = Duration.ofHours(1);
 
     @XNode("@name")
-    @XRegistryId
     public String name;
 
     @XNode("@class")
@@ -51,6 +48,10 @@ public class StatisticsComputer implements Supplier<Map<String, Long>> {
         return supplier().get();
     }
 
+    public String getId() {
+    	return name;
+    }
+    
     protected Supplier<Map<String, Long>> supplier() {
         try {
             return klass.getDeclaredConstructor().newInstance();
