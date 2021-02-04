@@ -153,33 +153,37 @@ public class TestRepositoryStats {
 		
 		int foundMetrics=0;
 		for (MetricName mn : gauges.keySet()) {
-			if (mn.toString().endsWith(".File")) {
-				assertEquals(2L,gauges.get(mn).getValue());
-				foundMetrics++;
+			
+			if (mn.getKey().startsWith("nuxeo.statistics.repository.doc-type")) {
+				if (mn.getTags().values().contains("File")) {
+					assertEquals(2L,gauges.get(mn).getValue());
+					foundMetrics++;
+				} 
+				else if (mn.getTags().values().contains("Folder")) {
+					assertEquals(1L,gauges.get(mn).getValue());
+					foundMetrics++;
+				} 
+
 			}
-			if (mn.toString().endsWith(".Folder")) {
-				assertEquals(1L,gauges.get(mn).getValue());
-				foundMetrics++;
-			}
-			if (mn.toString().endsWith(".Total")) {
-				assertEquals(3L,gauges.get(mn).getValue());
-				foundMetrics++;
-			}
-			if (mn.toString().endsWith(".mainBlobs")) {
+			if (mn.getKey().startsWith("nuxeo.statistics.repository.blobs.mainBlobs")) {
 				assertEquals(15L,gauges.get(mn).getValue());
-				foundMetrics++;
+				foundMetrics++;		
 			}
-			if (mn.toString().endsWith(".documentCreated")) {
-				assertEquals(3L,gauges.get(mn).getValue());
-				foundMetrics++;
+			
+			if (mn.getKey().startsWith("nuxeo.statistics.audit.event")) {
+				if (mn.getTags().values().contains("documentCreated")) {
+					assertEquals(3L,gauges.get(mn).getValue());
+					foundMetrics++;
+				} 
+				else if (mn.getTags().values().contains("documentModified")) {
+					assertEquals(1L,gauges.get(mn).getValue());
+					foundMetrics++;
+				} 
 			}
-			if (mn.toString().endsWith(".documentModified")) {
-				assertEquals(1L,gauges.get(mn).getValue());
-				foundMetrics++;
-			}			
+			
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
-		assertEquals(6, foundMetrics);
+		assertEquals(5, foundMetrics);
 		
 	}
 	

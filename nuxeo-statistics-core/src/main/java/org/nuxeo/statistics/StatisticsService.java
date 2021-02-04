@@ -31,5 +31,5 @@ public interface StatisticsService {
 
     void computeStatistics(String computer);
 
-    Long getStatistic(String computer, String key);
+    Long getStatistic(String key);
 }

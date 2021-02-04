@@ -19,6 +19,7 @@
 package org.nuxeo.statistics;
 
 import io.dropwizard.metrics5.Gauge;
+import io.dropwizard.metrics5.MetricName;
 import io.dropwizard.metrics5.MetricRegistry;
 import io.dropwizard.metrics5.SharedMetricRegistries;
 import org.nuxeo.ecm.core.api.NuxeoException;
@@ -29,10 +30,13 @@ import org.nuxeo.runtime.model.ComponentInstance;
 import org.nuxeo.runtime.model.DefaultComponent;
 import org.nuxeo.runtime.model.Descriptor;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRICS_REGISTRY_NAME;
 
@@ -86,11 +90,11 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
         Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
         if (optComputer.isPresent()) {
             StatisticsComputer computer = optComputer.get();
-            computer.get().forEach((k, v) -> {
-                var key = getEntryKey(computerName, k);
+            computer.get().forEach((name, v) -> {
+                var key = getKVSMetricKey(name);
                 getStore().put(key, v);
                 if (!Boolean.TRUE.equals(registeredMetrics.get(computerName))) {
-                    registerMetric(key);
+                    registerMetric(name, key);
                 }
             });
             // XXX: does not allow changes to metrics
@@ -99,18 +103,31 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
     }
 
     @Override
-    public Long getStatistic(String computerName, String key) {
-        return getStore().getLong(getEntryKey(computerName, key));
+    public Long getStatistic(String key) {
+        return getStore().getLong(key);
     }
 
-    protected void registerMetric(String key) {
-        registry.register(METRICS_PREFIX + "." + key, (Gauge<Long>) () -> (Long) getStore().getLong(key));
+    
+    protected void registerMetric(MetricName name) {
+    	registerMetric(name, getKVSMetricKey(name));
+    }
+        
+    protected void registerMetric(MetricName name, String key) {
+    	registry.register(name, (Gauge<Long>) () -> (Long) getStore().getLong(key));
     }
 
-    protected String getEntryKey(String computerName, String key) {
-        return computerName + "." + key;
+    protected String getKVSMetricKey(MetricName metricName) {
+    	
+    	String key = metricName.getKey();
+    	Set<String> tagNames = metricName.getTags().keySet();
+    	List<String> sortedTagNames = tagNames.stream().collect(Collectors.toList());
+    	Collections.sort(sortedTagNames);    	
+    	for (String tag: sortedTagNames) {
+    		key = key + "." + metricName.getTags().get(tag);
+    	}
+    	return key;
     }
-
+ 
     protected KeyValueStore getStore() {
         KeyValueStore store = Framework.getService(KeyValueService.class).getKeyValueStore(STATISTICS_STORE_NAME);
         if (store == null) {

@@ -14,14 +14,24 @@
  * limitations under the License.
  *
  * Contributors:
- *      Nelson Silva
  *      Tiry
  */
 package org.nuxeo.statistics.repository;
 
-import java.util.Map;
-import java.util.function.Supplier;
+import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
+import org.nuxeo.elasticsearch.client.ESRestClient;
+import org.nuxeo.runtime.api.Framework;
 
-public abstract class RepositoryStatisticsComputer implements Supplier<Map<String, Long>> {
+public abstract class BaseESStatisticsComputer extends AbstractStatisticsComputer {
    
+	
+	protected String getESIndexName(String repositoryName) {
+		ElasticSearchAdmin esa = Framework.getService(ElasticSearchAdmin.class);
+		return esa.getIndexNameForRepository(repositoryName);
+	}
+
+	protected ESRestClient getClient() {
+		return (ESRestClient) Framework.getService(ElasticSearchAdmin.class).getClient();
+	}
+
 }

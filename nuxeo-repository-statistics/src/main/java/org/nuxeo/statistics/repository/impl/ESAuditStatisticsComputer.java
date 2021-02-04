@@ -30,57 +30,51 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
-import org.nuxeo.elasticsearch.client.ESRestClient;
-import org.nuxeo.runtime.api.Framework;
-import org.nuxeo.statistics.repository.RepositoryStatisticsComputer;
+import org.nuxeo.statistics.repository.BaseESStatisticsComputer;
 
-public class ESAuditStatisticsComputer extends RepositoryStatisticsComputer {
+import io.dropwizard.metrics5.MetricName;
+
+public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 
 	private static final Log log = LogFactory.getLog(ESAuditStatisticsComputer.class);
-	
-	public ESAuditStatisticsComputer() {		
+
+	protected static final String AUDIT_INDEX = "audit";
+
+	public ESAuditStatisticsComputer() {
 	}
 
 	@Override
-	public Map<String, Long> get() {
+	public Map<MetricName, Long> get() {
 		return getCountsPerEventTypes();
 	}
-	
-	protected static final String AUDIT_INDEX="audit";
-	
-	protected ESRestClient getClient() {
-		return (ESRestClient) Framework.getService(ElasticSearchAdmin.class).getClient();
-	}
-
 	
 	protected SearchRequest searchRequest() {
 		return new SearchRequest(AUDIT_INDEX).searchType(SearchType.DFS_QUERY_THEN_FETCH);
 	}
 
-	protected Map<String, Long> getCountsPerEventTypes() {
+	protected Map<MetricName, Long> getCountsPerEventTypes() {
 
-		Map<String, Long> ret = new LinkedHashMap<>();
+		Map<MetricName, Long> ret = new LinkedHashMap<>();
 		SearchRequest searchRequest = searchRequest();
-		
-		
-		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20).
-				query(QueryBuilders.rangeQuery("eventDate").gte("now-1h")).aggregation(
-				AggregationBuilders.terms("eventId").field("eventId"));;
+
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20)
+				.query(QueryBuilders.rangeQuery("eventDate").gte("now-1h"))
+				.aggregation(AggregationBuilders.terms("eventId").field("eventId"));
+		;
 		searchRequest.source(sourceBuilder);
 		try {
 			SearchResponse response = getClient().search(searchRequest);
 
 			Terms terms = response.getAggregations().get("eventId");
 			for (Terms.Bucket term : terms.getBuckets()) {
-				ret.put(term.getKeyAsString(), term.getDocCount());
+
+				MetricName mn = mkMetricName("audit", "event").tagged("event", term.getKeyAsString());
+				ret.put(mn, term.getDocCount());
 			}
 		} catch (Exception e) {
 			log.error("Failed to get Type Cardinality", e);
 		}
 		return ret;
 	}
-	
-	
 
 }

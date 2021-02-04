@@ -18,9 +18,24 @@
  */
 package org.nuxeo.statistics.repository;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public abstract class AuditStatisticsComputer implements Supplier<Map<String, Long>> {
-   
+import io.dropwizard.metrics5.MetricName;
+
+public abstract class AbstractStatisticsComputer implements Supplier<Map<MetricName, Long>> {
+ 
+	
+	
+	protected MetricName mkMetricName(String... parts) {
+		 List<String> p = new ArrayList<>();
+		 p.add("nuxeo");
+		 p.add("statistics");
+		 p.addAll(Arrays.asList(parts));
+		return MetricName.build(p.toArray(new String[p.size()]));
+	}
+
 }

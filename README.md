@@ -34,38 +34,47 @@ More on this later.
 
 ### Document Counts
 
-Metrics are exposed to count the number of document for a give type:
 
-The name pattern is:
+nuxeo.statistics.audit.event{event=documentCreated}:3
+nuxeo.statistics.audit.event{event=documentModified}:1
 
-    nuxeo.statistics.repository.<repositoryName>.docCount.<docType>
+The Metric name is `nuxeo.statistics.repository.doc-type`.
+The tags added to the Metric are:
+    - `repository` for the repository name
+    - ``doc-type` for the document type
+The value is the number of document for the given document type in the target repository.
 
 Typically, on a repository called default and having only 3 documents we would get:
 
-    nuxeo.statistics.repository.default.docCount.File:2
-    nuxeo.statistics.repository.default.docCount.Folder:1
-    nuxeo.statistics.repository.default.docCount.Total:3
+    nuxeo.statistics.repository.doc-type{doc-type=File, repository=default}:2
+    nuxeo.statistics.repository.doc-type{doc-type=Folder, repository=default}:1
 
 ### Blobs size 
 
-The total size of main blobs is computed and exposed via a metric with a name pattern:
+The total size of main blobs is computed and exposed via a metric.
 
-    nuxeo.statistics.repository.<repositoryName>.blobVolume.mainBlobs
+The Metric name is `nuxeo.statistics.repository.blobs.mainBlobs`.
+The tags added to the Metric are:
+    - `repository` for the repository name
 
-The computed size is expressed in bytes.
+The value is the total volume in bytes for the main blobs attached to all documents in the repository.
+
+For example:
+
+    nuxeo.statistics.repository.blobs.mainBlobs{repository=default}:15000
 
 ### Events statistics
 
 The system computes an aggregate for all events in the Audit Log for the last hour.
 
-The name pattern is:
-
-    nuxeo.statistics.audit.<eventName>
+The Metric name is `nuxeo.statistics.audit.event`.
+The tags added to the Metric are:
+    - `event` for the name of the event
 
 If during the last hour 3 documents were created and 1 modified:   
 
-    nuxeo.statistics.audit.documentCreated:3
-    nuxeo.statistics.audit.documentModified:1
+    nuxeo.statistics.audit.event{event=documentCreated}:3
+    nuxeo.statistics.audit.event{event=documentModified}:1
 
 ## About Nuxeo
 

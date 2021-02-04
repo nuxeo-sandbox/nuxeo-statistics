@@ -22,12 +22,14 @@ import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XObject;
 import org.nuxeo.runtime.model.Descriptor;
 
+import io.dropwizard.metrics5.MetricName;
+
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Supplier;
 
 @XObject(value = "computer")
-public class StatisticsComputer implements Supplier<Map<String, Long>>, Descriptor {
+public class StatisticsComputer implements Supplier<Map<MetricName, Long>>, Descriptor {
 
     public static final Duration DEFAULT_INTERVAL = Duration.ofHours(1);
 
@@ -35,7 +37,7 @@ public class StatisticsComputer implements Supplier<Map<String, Long>>, Descript
     public String name;
 
     @XNode("@class")
-    public Class<? extends Supplier<Map<String, Long>>> klass;
+    public Class<? extends Supplier<Map<MetricName, Long>>> klass;
 
     @XNode("@interval")
     public Duration interval = DEFAULT_INTERVAL;
@@ -44,7 +46,7 @@ public class StatisticsComputer implements Supplier<Map<String, Long>>, Descript
     public String store;
 
     @Override
-    public Map<String, Long> get() {
+    public Map<MetricName, Long> get() {
         return supplier().get();
     }
 
@@ -52,7 +54,7 @@ public class StatisticsComputer implements Supplier<Map<String, Long>>, Descript
     	return name;
     }
     
-    protected Supplier<Map<String, Long>> supplier() {
+    protected Supplier<Map<MetricName, Long>> supplier() {
         try {
             return klass.getDeclaredConstructor().newInstance();
         } catch (ReflectiveOperationException e) {
