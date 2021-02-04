@@ -98,8 +98,8 @@ public class ESRepositoryStatisticsComputer extends BaseESStatisticsComputer {
 
 			Terms terms = response.getAggregations().get("primaryType");
 			for (Terms.Bucket term : terms.getBuckets()) {
-				MetricName mn = mkMetricName("repository", "doc-type").tagged("repository", repositoryName)
-						.tagged("doc-type", term.getKeyAsString());
+				MetricName mn = mkMetricName("repository", "documents").tagged("repository", repositoryName)
+						.tagged("doctype", term.getKeyAsString());
 				ret.put(mn, term.getDocCount());
 			}
 		} catch (Exception e) {

@@ -38,16 +38,16 @@ More on this later.
 nuxeo.statistics.audit.event{event=documentCreated}:3
 nuxeo.statistics.audit.event{event=documentModified}:1
 
-The Metric name is `nuxeo.statistics.repository.doc-type`.
+The Metric name is `nuxeo.statistics.repository.documents`.
 The tags added to the Metric are:
     - `repository` for the repository name
-    - ``doc-type` for the document type
+    - `doctype` for the document type
 The value is the number of document for the given document type in the target repository.
 
 Typically, on a repository called default and having only 3 documents we would get:
 
-    nuxeo.statistics.repository.doc-type{doc-type=File, repository=default}:2
-    nuxeo.statistics.repository.doc-type{doc-type=Folder, repository=default}:1
+    nuxeo.statistics.repository.documents{doctype=File, repository=default}:2
+    nuxeo.statistics.repository.documents{doctype=Folder, repository=default}:1
 
 ### Blobs size 
 
@@ -67,14 +67,14 @@ For example:
 
 The system computes an aggregate for all events in the Audit Log for the last hour.
 
-The Metric name is `nuxeo.statistics.audit.event`.
+The Metric name is `nuxeo.statistics.audit.events`.
 The tags added to the Metric are:
     - `event` for the name of the event
 
 If during the last hour 3 documents were created and 1 modified:   
 
-    nuxeo.statistics.audit.event{event=documentCreated}:3
-    nuxeo.statistics.audit.event{event=documentModified}:1
+    nuxeo.statistics.audit.events{event=documentCreated}:3
+    nuxeo.statistics.audit.events{event=documentModified}:1
 
 ## About Nuxeo
 

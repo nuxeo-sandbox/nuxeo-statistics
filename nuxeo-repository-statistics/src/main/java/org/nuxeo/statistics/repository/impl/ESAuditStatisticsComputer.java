@@ -30,6 +30,9 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.nuxeo.elasticsearch.ElasticSearchConstants;
+import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
+import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.statistics.repository.BaseESStatisticsComputer;
 
 import io.dropwizard.metrics5.MetricName;
@@ -37,8 +40,6 @@ import io.dropwizard.metrics5.MetricName;
 public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 
 	private static final Log log = LogFactory.getLog(ESAuditStatisticsComputer.class);
-
-	protected static final String AUDIT_INDEX = "audit";
 
 	public ESAuditStatisticsComputer() {
 	}
@@ -48,8 +49,13 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 		return getCountsPerEventTypes();
 	}
 	
+	 protected String getESIndexName() {
+	        ElasticSearchAdmin esa = Framework.getService(ElasticSearchAdmin.class);
+	        return esa.getIndexNameForType(ElasticSearchConstants.ENTRY_TYPE);
+	    }
+
 	protected SearchRequest searchRequest() {
-		return new SearchRequest(AUDIT_INDEX).searchType(SearchType.DFS_QUERY_THEN_FETCH);
+		return new SearchRequest(getESIndexName()).searchType(SearchType.DFS_QUERY_THEN_FETCH);
 	}
 
 	protected Map<MetricName, Long> getCountsPerEventTypes() {
@@ -68,7 +74,7 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 			Terms terms = response.getAggregations().get("eventId");
 			for (Terms.Bucket term : terms.getBuckets()) {
 
-				MetricName mn = mkMetricName("audit", "event").tagged("event", term.getKeyAsString());
+				MetricName mn = mkMetricName("audit", "events").tagged("event", term.getKeyAsString());
 				ret.put(mn, term.getDocCount());
 			}
 		} catch (Exception e) {

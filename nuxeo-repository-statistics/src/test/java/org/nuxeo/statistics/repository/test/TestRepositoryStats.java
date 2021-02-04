@@ -154,7 +154,7 @@ public class TestRepositoryStats {
 		int foundMetrics=0;
 		for (MetricName mn : gauges.keySet()) {
 			
-			if (mn.getKey().startsWith("nuxeo.statistics.repository.doc-type")) {
+			if (mn.getKey().startsWith("nuxeo.statistics.repository.documents")) {
 				if (mn.getTags().values().contains("File")) {
 					assertEquals(2L,gauges.get(mn).getValue());
 					foundMetrics++;
@@ -170,7 +170,7 @@ public class TestRepositoryStats {
 				foundMetrics++;		
 			}
 			
-			if (mn.getKey().startsWith("nuxeo.statistics.audit.event")) {
+			if (mn.getKey().startsWith("nuxeo.statistics.audit.events")) {
 				if (mn.getTags().values().contains("documentCreated")) {
 					assertEquals(3L,gauges.get(mn).getValue());
 					foundMetrics++;
