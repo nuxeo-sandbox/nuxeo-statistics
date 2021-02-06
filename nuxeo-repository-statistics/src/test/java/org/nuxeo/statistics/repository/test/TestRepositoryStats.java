@@ -1,30 +1,33 @@
 package org.nuxeo.statistics.repository.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRICS_REGISTRY_NAME;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.nuxeo.ecm.automation.AutomationService;
+import org.nuxeo.ecm.automation.OperationContext;
+import org.nuxeo.ecm.automation.test.AutomationFeature;
 import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
-import org.nuxeo.ecm.core.api.repository.RepositoryManager;
 import org.nuxeo.ecm.core.event.EventService;
-import org.nuxeo.ecm.core.event.EventServiceAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
@@ -37,8 +40,10 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.transaction.TransactionHelper;
 import org.nuxeo.statistics.StatisticsComputer;
 import org.nuxeo.statistics.StatisticsService;
-import org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer;
+import org.nuxeo.statistics.api.FetchStatisticOperation;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 
 import io.dropwizard.metrics5.Gauge;
@@ -49,7 +54,7 @@ import io.dropwizard.metrics5.MetricRegistry;
 import io.dropwizard.metrics5.SharedMetricRegistries;
 
 @RunWith(FeaturesRunner.class)
-@Features({RuntimeStreamFeature.class, RepositoryElasticSearchFeature.class})
+@Features({RuntimeStreamFeature.class, RepositoryElasticSearchFeature.class, AutomationFeature.class})
 @Deploy("org.nuxeo.ecm.platform.audit.api")
 @Deploy("org.nuxeo.ecm.platform.audit")
 @Deploy("org.nuxeo.ecm.platform.uidgen.core")
@@ -60,6 +65,8 @@ import io.dropwizard.metrics5.SharedMetricRegistries;
 @Deploy("org.nuxeo.elasticsearch.audit")
 @Deploy({"org.nuxeo.statistics.core","org.nuxeo.statistics.repository.test:test-metrics-contrib.xml"})
 public class TestRepositoryStats {
+
+	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	//@Test
 	public void stupid() throws Exception{
@@ -85,6 +92,9 @@ public class TestRepositoryStats {
 	
 	@Inject
 	protected ElasticSearchAdmin esa;
+	
+	@Inject
+	protected AutomationService as;
 	
 	protected void addSomeContent() throws Exception {
 		
@@ -137,7 +147,9 @@ public class TestRepositoryStats {
 				
 		addSomeContent();
 		
-		Thread.sleep(50000);
+		// run for 30 seconds to be sure we can get aggregates
+		System.out.println("Wait for 30s to let the different stream processors do their work");
+		Thread.sleep(30000);
 		
 		MetricRegistry registry = SharedMetricRegistries.getOrCreate(NUXEO_METRICS_REGISTRY_NAME);
 
@@ -150,7 +162,8 @@ public class TestRepositoryStats {
 		
 		SortedMap<MetricName, Gauge > gauges = registry.getGauges(filter);
 		
-		
+		System.out.println("##############################");	
+		System.out.println("Checking Computed metrics");	
 		int foundMetrics=0;
 		for (MetricName mn : gauges.keySet()) {
 			
@@ -172,7 +185,8 @@ public class TestRepositoryStats {
 			
 			if (mn.getKey().startsWith("nuxeo.statistics.audit.events")) {
 				if (mn.getTags().values().contains("documentCreated")) {
-					assertEquals(3L,gauges.get(mn).getValue());
+					// 3 created + 4 from Content Template because of Automation feature
+					assertEquals(7L,gauges.get(mn).getValue());
 					foundMetrics++;
 				} 
 				else if (mn.getTags().values().contains("documentModified")) {
@@ -184,7 +198,43 @@ public class TestRepositoryStats {
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
 		assertEquals(5, foundMetrics);
+	
+		// check that TS were computed
+		System.out.println("##############################");	
+		System.out.println("Checking TimeSeries");			
+		System.out.println("Service level");			
+		String json = Framework.getService(StatisticsService.class).getStatisticsTimeSerieAsJson();
+		System.out.println(json);		
+		List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
+		assertTrue(ts.size()>2);
 		
+		// test Automation Operation
+		System.out.println("Checking via Automation API");	
+		System.out.println("result without filter:");	
+		
+		OperationContext ctx = new OperationContext(session);
+	    Map<String, Object> params = new HashMap<>();
+	    
+	    // commit current TX to avoid TX reentrency when calling Automation
+	    TransactionHelper.commitOrRollbackTransaction();
+	    
+	    String json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
+	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
+	    assertTrue(ts.size()>2);		
+	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.repository.test.documents.File"));
+	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified"));
+	    System.out.println(json2);
+	    
+	    System.out.println("result with filter:");
+	    // re run with filter
+	    params.put("filter", "nuxeo.statistics.audit.events.*");
+	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
+	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
+	    assertTrue(ts.size()>2);
+		
+	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.test.documents.File"));
+	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified")); 
+	    System.out.println(json2);
 	}
 	
 }

@@ -22,6 +22,9 @@ import io.dropwizard.metrics5.Gauge;
 import io.dropwizard.metrics5.MetricName;
 import io.dropwizard.metrics5.MetricRegistry;
 import io.dropwizard.metrics5.SharedMetricRegistries;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.nuxeo.ecm.core.api.NuxeoException;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.kv.KeyValueService;
@@ -29,6 +32,11 @@ import org.nuxeo.runtime.kv.KeyValueStore;
 import org.nuxeo.runtime.model.ComponentInstance;
 import org.nuxeo.runtime.model.DefaultComponent;
 import org.nuxeo.runtime.model.Descriptor;
+import org.nuxeo.statistics.aggregate.StatisticTSAggregateComputation;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,98 +50,131 @@ import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRI
 
 public class StatisticsServiceImpl extends DefaultComponent implements StatisticsService {
 
-    protected static final String XP_COMPUTERS = "computers";
+	protected static final String XP_COMPUTERS = "computers";
 
-    protected static final String STATISTICS_STORE_NAME = "statistics";
+	protected static final String STATISTICS_STORE_NAME = "statistics";
 
-    protected static final String METRICS_PREFIX = "nuxeo.statistics";
+	protected static final String METRICS_PREFIX = "nuxeo.statistics";
 
-    protected MetricRegistry registry = SharedMetricRegistries.getOrCreate(NUXEO_METRICS_REGISTRY_NAME);
+	protected MetricRegistry registry = SharedMetricRegistries.getOrCreate(NUXEO_METRICS_REGISTRY_NAME);
 
-    protected Map<String, Boolean> registeredMetrics = new HashMap<>();
+	protected Map<String, Boolean> registeredMetrics = new HashMap<>();
 
-    @Override
-    public List<StatisticsComputer> getComputers() {
-    	return (List<StatisticsComputer>) (Object) getRegistry().getDescriptors(name, XP_COMPUTERS);  	 	
-    }
-    
-    @Override
-    public StatisticsComputer getComputer(String computerName) {	
-    	 
-    	 Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
-         if (optComputer.isPresent()) {
-        	 return optComputer.get();
-         }
-         return null;
-    }
-    
-    @Override
-    protected boolean register(String xp, Descriptor descriptor) {
-        return getRegistry().register(name, xp, descriptor);
-    }
-    
-    @Override
-    public void registerContribution(Object contribution, String xp, ComponentInstance component) {
-        if (contribution instanceof Descriptor) {
-            register(xp, (Descriptor) contribution);
-        }
-    }
-    
-    protected Optional<StatisticsComputer> getRegistryContribution(String xp, String contribName) { 	
-    	StatisticsComputer optComputer= getRegistry().getDescriptor(name, XP_COMPUTERS, contribName);  	
-    	return Optional.ofNullable(optComputer);
-    }
-    
-    @Override
-    public void computeStatistics(String computerName) {
-    	
-        Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
-        if (optComputer.isPresent()) {
-            StatisticsComputer computer = optComputer.get();
-            computer.get().forEach((name, v) -> {
-                var key = getKVSMetricKey(name);
-                getStore().put(key, v);
-                if (!Boolean.TRUE.equals(registeredMetrics.get(computerName))) {
-                    registerMetric(name, key);
-                }
-            });
-            // XXX: does not allow changes to metrics
-            registeredMetrics.putIfAbsent(computerName, true);
-        }
-    }
+	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    @Override
-    public Long getStatistic(String key) {
-        return getStore().getLong(key);
-    }
+	private static final Logger log = LogManager.getLogger(StatisticsServiceImpl.class);
 
-    
-    protected void registerMetric(MetricName name) {
-    	registerMetric(name, getKVSMetricKey(name));
-    }
-        
-    protected void registerMetric(MetricName name, String key) {
-    	registry.register(name, (Gauge<Long>) () -> (Long) getStore().getLong(key));
-    }
+	@Override
+	public List<StatisticsComputer> getComputers() {
+		return (List<StatisticsComputer>) (Object) getRegistry().getDescriptors(name, XP_COMPUTERS);
+	}
 
-    protected String getKVSMetricKey(MetricName metricName) {
-    	
-    	String key = metricName.getKey();
-    	Set<String> tagNames = metricName.getTags().keySet();
-    	List<String> sortedTagNames = tagNames.stream().collect(Collectors.toList());
-    	Collections.sort(sortedTagNames);    	
-    	for (String tag: sortedTagNames) {
-    		key = key + "." + metricName.getTags().get(tag);
-    	}
-    	return key;
-    }
- 
-    protected KeyValueStore getStore() {
-        KeyValueStore store = Framework.getService(KeyValueService.class).getKeyValueStore(STATISTICS_STORE_NAME);
-        if (store == null) {
-            throw new NuxeoException("Unknown key/value store: " + STATISTICS_STORE_NAME);
-        }
-        return store;
-    }
+	@Override
+	public StatisticsComputer getComputer(String computerName) {
+
+		Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
+		if (optComputer.isPresent()) {
+			return optComputer.get();
+		}
+		return null;
+	}
+
+	@Override
+	protected boolean register(String xp, Descriptor descriptor) {
+		return getRegistry().register(name, xp, descriptor);
+	}
+
+	@Override
+	public void registerContribution(Object contribution, String xp, ComponentInstance component) {
+		if (contribution instanceof Descriptor) {
+			register(xp, (Descriptor) contribution);
+		}
+	}
+
+	protected Optional<StatisticsComputer> getRegistryContribution(String xp, String contribName) {
+		StatisticsComputer optComputer = getRegistry().getDescriptor(name, XP_COMPUTERS, contribName);
+		return Optional.ofNullable(optComputer);
+	}
+
+	@Override
+	public void computeStatistics(String computerName) {
+
+		Optional<StatisticsComputer> optComputer = getRegistryContribution(XP_COMPUTERS, computerName);
+		if (optComputer.isPresent()) {
+			StatisticsComputer computer = optComputer.get();
+			computer.get().forEach((name, v) -> {
+				var key = getKVSMetricKey(name);
+				getStore().put(key, v);
+				if (!Boolean.TRUE.equals(registeredMetrics.get(computerName))) {
+					registerMetric(name, key);
+				}
+			});
+			// XXX: does not allow changes to metrics
+			registeredMetrics.putIfAbsent(computerName, true);
+		}
+	}
+
+	@Override
+	public Long getStatistic(String key) {
+		return getStore().getLong(key);
+	}
+
+	protected void registerMetric(MetricName name) {
+		registerMetric(name, getKVSMetricKey(name));
+	}
+
+	protected void registerMetric(MetricName name, String key) {
+		registry.register(name, (Gauge<Long>) () -> (Long) getStore().getLong(key));
+	}
+
+	protected String getKVSMetricKey(MetricName metricName) {
+
+		String key = metricName.getKey();
+		Set<String> tagNames = metricName.getTags().keySet();
+		List<String> sortedTagNames = tagNames.stream().collect(Collectors.toList());
+		Collections.sort(sortedTagNames);
+		for (String tag : sortedTagNames) {
+			key = key + "." + metricName.getTags().get(tag);
+		}
+		return key;
+	}
+
+	protected KeyValueStore getStore() {
+		KeyValueStore store = Framework.getService(KeyValueService.class).getKeyValueStore(STATISTICS_STORE_NAME);
+		if (store == null) {
+			throw new NuxeoException("Unknown key/value store: " + STATISTICS_STORE_NAME);
+		}
+		return store;
+	}
+
+	protected String getTSKey() {
+		return METRICS_PREFIX + ".timeseries";
+	}
+
+	public void storeStatisticsTimeSerie(List<Map<String, Long>> tsMetrics) {
+		String json;
+		try {
+			json = OBJECT_MAPPER.writer().writeValueAsString(tsMetrics);		
+			getStore().put(getTSKey(), json);
+		} catch (JsonProcessingException e) {
+			log.error("Unable to convert to save metric aggregate", e);
+		}
+	}
+	
+	public String getStatisticsTimeSerieAsJson() {	
+		return new String(getStore().get(getTSKey()));
+	}
+
+	public List<Map<String, Long>> getStatisticsTimeSerie() {	
+		
+		String json = getStatisticsTimeSerieAsJson();
+		try {
+			return (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json, new TypeReference<List<Map<String, Long>>>(){});		
+		} catch (JsonProcessingException e) {
+			log.error("Unable to convert to save metric aggregate", e);
+		}
+		return null;
+	}
+
 
 }

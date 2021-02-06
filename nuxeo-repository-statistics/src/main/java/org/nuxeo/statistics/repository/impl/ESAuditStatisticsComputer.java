@@ -66,7 +66,7 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20)
 				.query(QueryBuilders.rangeQuery("eventDate").gte("now-1h"))
 				.aggregation(AggregationBuilders.terms("eventId").field("eventId"));
-		;
+		
 		searchRequest.source(sourceBuilder);
 		try {
 			SearchResponse response = getClient().search(searchRequest);

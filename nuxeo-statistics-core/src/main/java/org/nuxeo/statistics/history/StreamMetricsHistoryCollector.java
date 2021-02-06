@@ -107,26 +107,21 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 		ret.put("nodeId", getNodeId());
 		ret.set("metrics", metrics);
 
-		System.out.println("Storing history");
 		try {			
 			
 			Name streamName = Name.ofUrn(STATS_HISTORY_STREAM);
 			Record rec = Record.of(hostIp, OBJECT_MAPPER.writer().writeValueAsString(ret).getBytes(UTF_8));
 			
 			LogAppender<Externalizable> appender = service.getLogManager().getAppender(streamName);			
-			appender.append(rec.getKey(), rec);			
-			
-			//service.getStreamManager().append(STATS_HISTORY_STREAM,rec);
-
+			appender.append(rec.getKey(), rec);					
+		
 		} catch (JsonProcessingException e) {
 			throw new StreamRuntimeException("Cannot convert to json", e);
 		} catch (Exception e ) {
 			e.printStackTrace();
-		}
-		
-		System.out.println("History stored");
-		System.out.println(ret.toString());
-		
+		}		
+		//System.out.println("History stored");
+		//System.out.println(ret.toString());	
 	}
 
 	protected void reportTimer(ArrayNode metrics, MetricName key, Timer value) {
