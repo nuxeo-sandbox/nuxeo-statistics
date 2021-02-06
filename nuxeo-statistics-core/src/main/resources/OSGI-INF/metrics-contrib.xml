@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<component name="org.nuxeo.statistics.metrics.contrib">
+
+  <extension target="org.nuxeo.runtime.metrics.MetricsService" point="reporter">
+
+    <reporter name="statisticHistory" pollInterval="60"
+      class="org.nuxeo.statistics.history.StreamStatisticsReporter">
+    </reporter>
+
+  </extension>
+
+</component>

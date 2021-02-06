@@ -39,12 +39,4 @@
     </configuration>
   </extension>
 
-<!-- 
-  <extension target="org.nuxeo.runtime.metrics.MetricsService" point="reporter">
-    <reporter enabled="true" name="mock" pollInterval="42"
-      class="org.nuxeo.runtime.metrics.MockReporter">
-      <option name="foo">bar</option>
-    </reporter>
-  </extension>
- -->
 </component>

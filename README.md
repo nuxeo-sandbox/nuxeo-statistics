@@ -27,8 +27,21 @@ The fact that the statistics are exposed via metrics provide a few key advantage
  - you can easily add a TSDB to store the evolution on the time dimension
  - you can leverage existing tools for graphing
 
-More on this later.
+### Levrage Stream for metrics history retention
 
+While some dashboard can be built using native TSDB and tools like Grafana/Graphite, we also want to allow application to build Application level dashboard without having to bridge the "Ops Dashboard" system with the application layed (Network accessibility, security ...).
+
+The idea is to periodically collect a set of metrics (the statistic metrics but also potentially others) and archive them as a record in a Nuxeo stream.
+This way, the target Nuxeo Stream becomes a history of the metrics snapshots and the underlying Kafka topic retention allows to control for how long we want to keep history.
+
+### Application level Aggregates and API
+
+Using a Computation we can read the whole history available in Nuxeo Stream, compute an aggregate and store the result in the KVStore.
+Then using a simple Automation Operation we can retrive the full time-series for all metrics and use this to plot graphs on the client side.
+
+### Logical Architecture
+
+<img src="doc/Metrics-and-API-principles.png" width="800px">
 
 ## Current Exposed Statistics
 

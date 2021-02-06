@@ -137,7 +137,7 @@ public class TestRepositoryStats {
 				
 		addSomeContent();
 		
-		Thread.sleep(5000);
+		Thread.sleep(50000);
 		
 		MetricRegistry registry = SharedMetricRegistries.getOrCreate(NUXEO_METRICS_REGISTRY_NAME);
 
