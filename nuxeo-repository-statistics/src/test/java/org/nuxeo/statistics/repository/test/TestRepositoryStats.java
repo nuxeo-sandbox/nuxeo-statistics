@@ -62,6 +62,7 @@ import io.dropwizard.metrics5.SharedMetricRegistries;
 @Deploy("org.nuxeo.elasticsearch.seqgen")
 @Deploy("org.nuxeo.statistics.repository.test:elasticsearch-seqgen-index-test-contrib.xml")
 @Deploy("org.nuxeo.statistics.repository.test:elasticsearch-audit-index-test-contrib.xml")
+@Deploy("org.nuxeo.statistics.repository.test:kv-store-contrib.xml")
 @Deploy("org.nuxeo.elasticsearch.audit")
 @Deploy({"org.nuxeo.statistics.core","org.nuxeo.statistics.repository.test:test-metrics-contrib.xml"})
 public class TestRepositoryStats {
@@ -227,14 +228,33 @@ public class TestRepositoryStats {
 	    
 	    System.out.println("result with filter:");
 	    // re run with filter
+	    ctx = new OperationContext(session);
 	    params.put("filter", "nuxeo.statistics.audit.events.*");
 	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
+	    System.out.println("Filytered result=" + json2);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
 	    assertTrue(ts.size()>2);
 		
 	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.test.documents.File"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified")); 
 	    System.out.println(json2);
+	    
+	    // call unitary metric
+	    ctx = new OperationContext(session);
+	    ctx.setInput("nuxeo.statistics.repository.blobs.mainBlobs.test");
+	    params.clear();
+	    Long bytes = (Long) as.run(ctx, FetchStatisticOperation.ID, params);
+	    System.out.println(bytes);
+	    assertEquals((Long) 15L, bytes);
+	   
+	    
+	    ctx = new OperationContext(session);
+	    ctx.setInput("nuxeo.statistics.repository.documents.File.test");
+	    params.clear();
+	    Long nbdocs = (Long) as.run(ctx, FetchStatisticOperation.ID, params);
+	    System.out.println(nbdocs);
+	    assertEquals((Long) 2L, nbdocs);
+	   
 	}
 	
 }

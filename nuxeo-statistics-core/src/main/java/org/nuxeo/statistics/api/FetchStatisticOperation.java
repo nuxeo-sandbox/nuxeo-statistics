@@ -12,6 +12,7 @@ import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
 import org.nuxeo.ecm.automation.core.annotations.Param;
+import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.statistics.StatisticsService;
 
@@ -25,8 +26,8 @@ public class FetchStatisticOperation {
 	@Param(name = "filter", required = false)
 	protected String filter = null;
 
-	//@Context
-	//protected StatisticsService service;
+	@Context
+	protected CoreSession session;
 
 	protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -57,6 +58,15 @@ public class FetchStatisticOperation {
 		} else {
 			return service.getStatisticsTimeSerieAsJson();
 		}
+	}
+
+
+	@OperationMethod
+	public Long run(String statisticName) throws Exception {
+		
+		StatisticsService service = Framework.getService(StatisticsService.class);
+		
+		return service.getStatistic(statisticName);
 	}
 
 }

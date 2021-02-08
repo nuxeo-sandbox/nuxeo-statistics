@@ -7,7 +7,6 @@ Bundle-Name: nuxeo-statistics-core
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.nuxeo.statistics.core;singleton=true
 Nuxeo-Component: OSGI-INF/stream-contrib.xml,
-  OSGI-INF/kv-store-contrib.xml,
   OSGI-INF/statistics-service.xml,
   OSGI-INF/metrics-contrib.xml,
   OSGI-INF/operation-contrib.xml

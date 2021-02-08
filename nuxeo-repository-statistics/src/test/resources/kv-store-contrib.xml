@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="org.nuxeo.statistics.kv.contrib" version="1.0">
  
-<!-- not declared so that it used the default KV Store as template and use the proper backend  
     <extension target="org.nuxeo.runtime.kv.KeyValueService" point="configuration">
         <store name="statistics" class="org.nuxeo.runtime.kv.MemKeyValueStore"/>
     </extension>
- -->
+
 </component>
