@@ -1,0 +1,24 @@
+{
+  "extends": [
+    "@open-wc/eslint-config",
+    "eslint-config-prettier"
+  ],
+  "rules": {
+    "class-methods-use-this": "off",
+    "import/extensions": ["error", "always", {"ignorePackages": true}],
+    "no-underscore-dangle": "off"
+  },
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "plugins": ["html"],
+  "settings": {
+    "html/indent": "+2",
+    "html/report-bad-indent": "error"
+  },
+  "globals": {
+    "Nuxeo": false,
+    "Polymer": false
+  }
+}
