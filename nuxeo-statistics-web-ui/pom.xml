@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+   <parent>
+    <groupId>org.nuxeo.statistics</groupId>
+    <artifactId>nuxeo-statistics</artifactId>
+    <version>11.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>nuxeo-statistics-web-ui</artifactId>
+  <name>Nuxeo Statistics Web UI</name>
+  <description>Nuxeo Statistics Web UI</description>
+
+  <build>
+    <resources>
+     <resource>
+       <directory>resources</directory>
+     </resource>
+   </resources>
+    <plugins>
+     <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>resources/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>clean</id>
+            <phase>clean</phase>
+            <configuration>
+              <target>
+                <ant antfile="${basedir}/build.xml" dir="${basedir}" target="clean"></ant>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-build</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <target>
+                <ant antfile="${basedir}/build.xml" dir="${basedir}"></ant>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
