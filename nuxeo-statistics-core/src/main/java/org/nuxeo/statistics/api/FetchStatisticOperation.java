@@ -1,5 +1,6 @@
 package org.nuxeo.statistics.api;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,12 @@ public class FetchStatisticOperation {
 	@Param(name = "filter", required = false)
 	protected String filter = null;
 
+	@Param(name = "start", required = false)
+	protected Long start = null;
+
+	@Param(name = "duration", required = false)
+	protected String duration = null;
+	
 	@Context
 	protected CoreSession session;
 
@@ -36,11 +43,36 @@ public class FetchStatisticOperation {
 
 		StatisticsService service = Framework.getService(StatisticsService.class);
 		
-		if (filter != null) {
+		if (filter != null || start !=null || duration!=null ) {
 
+			
+			Long end=null;
+			if (start==null && duration!=null) {
+				start = System.currentTimeMillis()/1000;
+			}
+			else if (start!=null && duration==null) {
+				duration = "1y";
+			}
+			if (start!=null && duration!=null) {
+				duration = duration.toUpperCase();
+				if (!duration.startsWith("P")) {
+					if (duration.contains("D")) {
+						duration = "P" + duration;
+					} else {
+						duration = "PT" + duration;	
+					}					
+				}
+				end = start-Duration.parse(duration).getSeconds();
+			}
+				
 			List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
 			List<Map<String, Long>> filtered = new ArrayList<>();
-			Pattern regexp = Pattern.compile(filter);
+		
+			Pattern regexp = null;
+			
+			if (filter!=null) {
+				regexp = Pattern.compile(filter);
+			}
 
 			for (Map<String, Long> metrics : ts) {
 
@@ -51,9 +83,17 @@ public class FetchStatisticOperation {
 						filterdMetrics.put(key, metrics.get(key));
 					}
 				}
-				filtered.add(filterdMetrics);
+				
+				if (start!=null && end!=null) {
+					long t = filterdMetrics.get("ts");
+					
+					if (t <= start && t >= end ) {
+						filtered.add(filterdMetrics);	
+					}					
+				} else {
+					filtered.add(filterdMetrics);
+				}
 			}
-
 			return OBJECT_MAPPER.writer().writeValueAsString(filtered);
 		} else {
 			return service.getStatisticsTimeSerieAsJson();

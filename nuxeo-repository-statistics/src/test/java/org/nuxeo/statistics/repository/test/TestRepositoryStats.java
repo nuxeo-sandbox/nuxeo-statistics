@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRICS_REGISTRY_NAME;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,7 @@ public class TestRepositoryStats {
 		System.out.println(" #events= " + response.getHits().getTotalHits().value);
 	}
 	
+		
 	@Inject
 	protected CoreSession session;
 	
@@ -253,13 +255,21 @@ public class TestRepositoryStats {
 	    ctx = new OperationContext(session);
 	    params.put("filter", "nuxeo.statistics.audit.events.*");
 	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
-	    System.out.println("Filytered result=" + json2);
+	    System.out.println("Filtered result=" + json2);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
 	    assertTrue(ts.size()>2);
 		
 	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.documents.File.test"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified")); 
-	    System.out.println(json2);
+	    
+	    // re run with filter on time
+	    ctx = new OperationContext(session);
+	    params.put("filter", "nuxeo.statistics.audit.events.*");
+	    params.put("duration", "6s");   
+	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
+	    System.out.println("Filtered result=" + json2);
+	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
+	    assertEquals(1L, ts.size());
 	    
 	    // call unitary metric
 	    ctx = new OperationContext(session);

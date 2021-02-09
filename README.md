@@ -99,9 +99,20 @@ This operation supports 2 types of call:
 
  - operation: `Statistics.Fetch`
  - input: void
- - parameter: `filter` (RegExp String)
+ - parameters: 
+    - `filter` : Regular Expression applied to metric name
+    - `start` : start time to extract metric from
+        - all metrics returned will have a timestamp <= start
+        - start is a timestamp expressed in seconds (i.e. `System.currentTimeMillis()/1000`)
+    - `duration` : range of the time serie
+        - duration will be parsed as a [Java Duration](https://docs.oracle.com/javase/8/docs/api/java/time/Duration.html#parse-java.lang.CharSequence-)
+        - Operation will automatically add the `PT` prefix if needed
+            - "5s" will be understood as 5 seconds
+            - "5d" will be understood as 5 days
+        - if `start` is not set it will be initialized to `System.currentTimeMillis()/1000`
+        - all metrics returned will have a start-duration <= timestamp <= start
+        
  - return: JSON [{metric1_ts1, metric2_ts1 ... ts1} {metric1_ts2, metric2_ts2 ... ts2} ... ]
-
 
 ### String input : retrieve value for one metric
 
