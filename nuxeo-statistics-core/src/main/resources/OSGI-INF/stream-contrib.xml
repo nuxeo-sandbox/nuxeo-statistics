@@ -3,12 +3,14 @@
 
     <extension point="streamProcessor" target="org.nuxeo.runtime.stream.service">
 
+		<!--  Computation to trigger update of the metrics -->
         <streamProcessor name="statistics" class="org.nuxeo.statistics.stream.StatisticsProcessor">
             <policy name="default" maxRetries="0" continueOnFailure="true" />
             <stream name="input/null" partitions="1" codec="avro" />
             <computation name="statistics" concurrency="1" />
         </streamProcessor>
 
+        <!--  Computation to trigger the aggregation read from the statistics/history log-->
         <streamProcessor name="statisticsAggregator" class="org.nuxeo.statistics.aggregate.StatisticsAggregatorProcessor">
             <policy name="default" maxRetries="0" continueOnFailure="true" />
             <stream name="input/null" partitions="1" codec="avro" />
@@ -18,6 +20,7 @@
     </extension>
 
 
+    <!--  This stream is populated by the StreamMetricsHistoryCollector that runs as a MetricsReporter -->
 	<extension point="logConfig" target="org.nuxeo.runtime.stream.service">
 	    <logConfig>
 	      <log name="statistics/history" size="1" />

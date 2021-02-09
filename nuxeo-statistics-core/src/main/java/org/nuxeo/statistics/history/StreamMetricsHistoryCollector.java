@@ -12,11 +12,13 @@ import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
 import org.nuxeo.lib.stream.StreamRuntimeException;
+import org.nuxeo.lib.stream.codec.Codec;
 import org.nuxeo.lib.stream.computation.Record;
 import org.nuxeo.lib.stream.log.LogAppender;
 import org.nuxeo.lib.stream.log.Name;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.cluster.ClusterService;
+import org.nuxeo.runtime.codec.CodecService;
 import org.nuxeo.runtime.stream.StreamService;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -112,7 +114,8 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 			Name streamName = Name.ofUrn(STATS_HISTORY_STREAM);
 			Record rec = Record.of(hostIp, OBJECT_MAPPER.writer().writeValueAsString(ret).getBytes(UTF_8));
 			
-			LogAppender<Externalizable> appender = service.getLogManager().getAppender(streamName);			
+			Codec<Record> codec = Framework.getService(CodecService.class).getCodec("avro", Record.class);		
+			LogAppender<Record> appender = service.getLogManager().getAppender(streamName,codec);			
 			appender.append(rec.getKey(), rec);					
 		
 		} catch (JsonProcessingException e) {
@@ -120,8 +123,6 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 		} catch (Exception e ) {
 			e.printStackTrace();
 		}		
-		//System.out.println("History stored");
-		//System.out.println(ret.toString());	
 	}
 
 	protected void reportTimer(ArrayNode metrics, MetricName key, Timer value) {

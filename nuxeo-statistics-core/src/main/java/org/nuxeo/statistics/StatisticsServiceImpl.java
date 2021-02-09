@@ -20,6 +20,7 @@ package org.nuxeo.statistics;
 
 import static org.nuxeo.lib.stream.computation.log.ComputationRunner.NUXEO_METRICS_REGISTRY_NAME;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,19 +147,25 @@ public class StatisticsServiceImpl extends DefaultComponent implements Statistic
 		}
 	}
 	
-	public String getStatisticsTimeSerieAsJson() {	
-		return new String(getStore().get(getTSKey()));
+	public String getStatisticsTimeSerieAsJson() {
+		byte[] jsonData = getStore().get(getTSKey());
+		if (jsonData!=null) {
+			return new String(jsonData);	
+		} else {
+			log.warn("No data available yet for statistic timeserie");
+			return "[]";
+		}
+		
 	}
 
-	public List<Map<String, Long>> getStatisticsTimeSerie() {	
-		
+	public List<Map<String, Long>> getStatisticsTimeSerie() {			
 		String json = getStatisticsTimeSerieAsJson();
 		try {
 			return (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json, new TypeReference<List<Map<String, Long>>>(){});		
 		} catch (JsonProcessingException e) {
 			log.error("Unable to convert to save metric aggregate", e);
 		}
-		return null;
+		return Collections.emptyList();
 	}
 
 

@@ -34,6 +34,11 @@
         <artifactId>nuxeo-repository-statistics</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.nuxeo.statistics</groupId>
+        <artifactId>nuxeo-statistics-web-ui</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

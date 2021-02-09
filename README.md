@@ -114,6 +114,31 @@ This operation supports 2 types of call:
         
  - return: JSON [{metric1_ts1, metric2_ts1 ... ts1} {metric1_ts2, metric2_ts2 ... ts2} ... ]
 
+    [
+        {
+            "nuxeo.statistics.audit.events.documentCreated":7,
+            "nuxeo.statistics.audit.events.documentModified":1,
+            "nuxeo.statistics.repository.documents.Domain.test":1,
+            "nuxeo.statistics.audit.events.loginSuccess":1,
+            "nuxeo.statistics.audit.events.documentSecurityUpdated":2,
+            "nuxeo.statistics.repository.blobs.mainBlobs.test":15,
+            "nuxeo.statistics.repository.documents.Folder.test":1,
+            "nuxeo.statistics.repository.documents.File.test":2,
+            "ts":1612897866
+        },
+        {
+            "nuxeo.statistics.audit.events.documentCreated":7,
+            "nuxeo.statistics.audit.events.documentModified":1,
+            "nuxeo.statistics.repository.documents.Domain.test":1,
+            "nuxeo.statistics.audit.events.loginSuccess":1,
+            "nuxeo.statistics.audit.events.documentSecurityUpdated":2,
+            "nuxeo.statistics.repository.blobs.mainBlobs.test":15,
+            "nuxeo.statistics.repository.documents.Folder.test":1,
+            "nuxeo.statistics.repository.documents.File.test":2,
+            "ts":1612897876
+        }
+    ]
+
 ### String input : retrieve value for one metric
 
  - operation: `Statistics.Fetch`

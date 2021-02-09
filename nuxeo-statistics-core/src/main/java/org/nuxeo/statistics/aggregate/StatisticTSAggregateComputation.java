@@ -1,6 +1,5 @@
 package org.nuxeo.statistics.aggregate;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +23,6 @@ import org.nuxeo.statistics.MetricsNameHelper;
 import org.nuxeo.statistics.StatisticsService;
 import org.nuxeo.statistics.history.StreamMetricsHistoryCollector;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -68,8 +66,7 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 				tailer = service.getLogManager().createTailer(Name.ofUrn("StatisticAggregator"),
 						Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM), codec);
 			} catch (Exception e) {
-				System.out.println("Unale to open source stream:");
-				e.printStackTrace();
+				log.error("Unale to open source stream:", e);
 				setTimer(context);
 				return;
 			}
@@ -77,21 +74,22 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 			List<Map<String, Long>> result = new ArrayList<Map<String, Long>>();
 			LogRecord<Record> entry = null;
 			try {
-
 				do {
 					entry = tailer.read(Duration.ofSeconds(1));
 					if (entry != null) {
 						result.add(aggregate(entry.message()));
 					}
 				} while (entry != null);
-
+			} catch (Exception e) {
+				log.error("Error while reading metrics from stream", e);
+			} finally {
 				// close without committing position
 				// because we want to read from the beginning each time!
-				tailer.close();
-			} catch (InterruptedException e) {
-				log.error("Error while reading metrics from stream", e);
+				tailer.close();				
 			}
-			Framework.getService(StatisticsService.class).storeStatisticsTimeSerie(result);
+			if (result.size()>0) {
+				Framework.getService(StatisticsService.class).storeStatisticsTimeSerie(result);
+			}
 		}
 		setTimer(context);
 	}
@@ -109,13 +107,12 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 
 				String name = metric.get("k").textValue();
 				Long value = metric.get("v").asLong();
-
 				String key = buildMetricKey(metric, name);
 
 				data.put(key, value);
 			}
-		} catch (IOException e) {
-			log.error("Unable to process metric data from stream", e);
+		} catch (Exception e) {
+			log.error("Unable to process metric Record from stream", e);
 		}
 		return data;
 	}
@@ -130,32 +127,6 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 			}			
 		}	
 		return MetricsNameHelper.getMetricKey(name, tags);
-	}
-
-
-	protected String buildMetricKey_Old(JsonNode metricData, String name) {
-
-		Iterator<String> fields = metricData.fieldNames();
-		Map<String, String> tags = new HashMap<>();
-		while(fields.hasNext()) {
-			String tagName = fields.next();
-			if (!tagName.equals("k") && !tagName.equals("v")) {
-				tags.put(tagName, metricData.get(tagName).textValue());
-			}
-			
-		}
-		if (name.endsWith(".documents")) {
-			String repo = metricData.get("repository").textValue();
-			String docType = metricData.get("doctype").textValue();
-			return String.join(".", "nuxeo.statistics.repository", repo, "documents", docType);
-		} else if (name.endsWith(".audit.events")) {
-			String event = metricData.get("event").textValue();
-			return String.join(".", name, event);
-		} else if (name.endsWith(".mainBlobs")) {
-			String repo = metricData.get("repository").textValue();
-			return String.join(".", "nuxeo.statistics.repository", repo, "blobs.mainBlobs");
-		}
-		return name;
 	}
 
 }
