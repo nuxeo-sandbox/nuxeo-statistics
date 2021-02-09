@@ -26,8 +26,12 @@ import org.nuxeo.ecm.core.api.Blob;
 import org.nuxeo.ecm.core.api.CoreSession;
 import org.nuxeo.ecm.core.api.DocumentModel;
 import org.nuxeo.ecm.core.api.DocumentModelList;
+import org.nuxeo.ecm.core.api.NuxeoPrincipal;
+import org.nuxeo.ecm.core.api.impl.UserPrincipal;
 import org.nuxeo.ecm.core.api.impl.blob.StringBlob;
+import org.nuxeo.ecm.core.event.EventContext;
 import org.nuxeo.ecm.core.event.EventService;
+import org.nuxeo.ecm.core.event.impl.UnboundEventContext;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchService;
 import org.nuxeo.elasticsearch.query.NxQueryBuilder;
@@ -123,6 +127,8 @@ public class TestRepositoryStats {
 		file2.setPropertyValue("dc:description", "Modified");
 		file2 = session.saveDocument(file2);
 		
+		fireAuthEvent();
+		
 		session.save();
 		TransactionHelper.commitOrRollbackTransaction();
 		TransactionHelper.startTransaction();
@@ -135,6 +141,18 @@ public class TestRepositoryStats {
 		assertNotEquals(0, allDocs.size());
 	}
 	
+	protected void fireAuthEvent() {
+		 NuxeoPrincipal principal = new UserPrincipal("JackyChan", null, false, false);
+
+         Map<String, Serializable> props = new HashMap<>();
+         props.put("AuthenticationPlugin", "foobar");
+         props.put("category", "NuxeoAuthentication");
+         props.put("comment", "This is a login");
+
+         EventContext ctx = new UnboundEventContext(principal, props);
+
+         eventService.fireEvent(ctx.newEvent("loginSuccess"));
+	}
 	
 	@Test
 	public void checkStatsComputerDeployed() throws Exception {
@@ -193,12 +211,16 @@ public class TestRepositoryStats {
 				else if (mn.getTags().values().contains("documentModified")) {
 					assertEquals(1L,gauges.get(mn).getValue());
 					foundMetrics++;
-				} 
+				}
+				else if (mn.getTags().values().contains("loginSuccess")) {
+					assertEquals(1L,gauges.get(mn).getValue());
+					foundMetrics++;
+				}
 			}
 			
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
-		assertEquals(5, foundMetrics);
+		assertEquals(6, foundMetrics);
 	
 		// check that TS were computed
 		System.out.println("##############################");	
@@ -222,7 +244,7 @@ public class TestRepositoryStats {
 	    String json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
 	    assertTrue(ts.size()>2);		
-	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.repository.test.documents.File"));
+	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.repository.documents.File.test"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified"));
 	    System.out.println(json2);
 	    
@@ -235,7 +257,7 @@ public class TestRepositoryStats {
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
 	    assertTrue(ts.size()>2);
 		
-	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.test.documents.File"));
+	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.documents.File.test"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified")); 
 	    System.out.println(json2);
 	    
@@ -246,7 +268,6 @@ public class TestRepositoryStats {
 	    Long bytes = (Long) as.run(ctx, FetchStatisticOperation.ID, params);
 	    System.out.println(bytes);
 	    assertEquals((Long) 15L, bytes);
-	   
 	    
 	    ctx = new OperationContext(session);
 	    ctx.setInput("nuxeo.statistics.repository.documents.File.test");
@@ -254,7 +275,7 @@ public class TestRepositoryStats {
 	    Long nbdocs = (Long) as.run(ctx, FetchStatisticOperation.ID, params);
 	    System.out.println(nbdocs);
 	    assertEquals((Long) 2L, nbdocs);
-	   
+	
 	}
 	
 }

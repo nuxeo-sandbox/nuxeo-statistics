@@ -20,6 +20,7 @@ import org.nuxeo.lib.stream.log.Name;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.codec.CodecService;
 import org.nuxeo.runtime.stream.StreamService;
+import org.nuxeo.statistics.MetricsNameHelper;
 import org.nuxeo.statistics.StatisticsService;
 import org.nuxeo.statistics.history.StreamMetricsHistoryCollector;
 
@@ -120,7 +121,29 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 	}
 
 	protected String buildMetricKey(JsonNode metricData, String name) {
+		Iterator<String> fields = metricData.fieldNames();
+		Map<String, String> tags = new HashMap<>();
+		while(fields.hasNext()) {
+			String tagName = fields.next();
+			if (!tagName.equals("k") && !tagName.equals("v")) {
+				tags.put(tagName, metricData.get(tagName).textValue());
+			}			
+		}	
+		return MetricsNameHelper.getMetricKey(name, tags);
+	}
 
+
+	protected String buildMetricKey_Old(JsonNode metricData, String name) {
+
+		Iterator<String> fields = metricData.fieldNames();
+		Map<String, String> tags = new HashMap<>();
+		while(fields.hasNext()) {
+			String tagName = fields.next();
+			if (!tagName.equals("k") && !tagName.equals("v")) {
+				tags.put(tagName, metricData.get(tagName).textValue());
+			}
+			
+		}
 		if (name.endsWith(".documents")) {
 			String repo = metricData.get("repository").textValue();
 			String docType = metricData.get("doctype").textValue();
