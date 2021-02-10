@@ -65,7 +65,7 @@ class StatisticsData extends Nuxeo.Element {
     const params = {};
     let { filter } = this;
     if (this.metric) {
-      filter = `nuxeo.statistics.${this.metric}.*`;
+      filter = `nuxeo.statistics.${this.metric}`;
     }
     if (filter !== '*') {
       params.filter = filter;
@@ -78,7 +78,13 @@ class StatisticsData extends Nuxeo.Element {
             if (k === 'ts') {
               return ['ts', moment(v * 1000).format(this.dateFormat)];
             }
-            return [this.metric ? k.replace(`nuxeo.statistics.${this.metric}.`, '') : k, v];
+            let key = k;
+            if (this.metric) {
+              // check is there's a capture group in the metric regex
+              // if so, use it as key
+              key = k.match(this.metric)[1] || k;
+            }
+            return [key.replace('nuxeo.statistics', ''), v];
           }),
         ),
       );

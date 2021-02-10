@@ -71,7 +71,10 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
         }
       </style>
 
-      <nuxeo-statistics-data metric="repository.documents" data="{{documentsStats}}"></nuxeo-statistics-data>
+      <nuxeo-statistics-data
+        metric="repository.documents.(.+).default"
+        data="{{documentsStats}}"
+      ></nuxeo-statistics-data>
 
       <!-- Document count per type -->
       <nuxeo-card heading="[[i18n('statistics.documentTypes.heading')]]">
@@ -88,7 +91,7 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
         <chart-line
           values="[[documentsTS.values]]"
           labels="[[documentsTS.labels]]"
-          series="[[_stripRepo(documentsTS.series)]]"
+          series="[[documentsTS.series]]"
         ></chart-line>
       </nuxeo-card>
     `;
@@ -110,7 +113,7 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
   }
 
   _labels(obj) {
-    return this._stripRepo(Object.keys(obj));
+    return Object.keys(obj);
   }
 
   _values(obj) {
@@ -119,11 +122,9 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
 
   _documentsStatsChanged(data) {
     this.documentsTS = _buildTS(data);
-    this.documents = data[data.length - 1];
-  }
-
-  _stripRepo(ks) {
-    return ks.map((k) => k.split('.')[0]);
+    const documents = { ...data[data.length - 1] };
+    delete documents.ts;
+    this.documents = documents;
   }
 }
 
