@@ -13,17 +13,16 @@
         <!--  Computation to trigger the aggregation read from the statistics/history log-->
         <streamProcessor name="statisticsAggregator" class="org.nuxeo.statistics.aggregate.StatisticsAggregatorProcessor">
             <policy name="default" maxRetries="0" continueOnFailure="true" />
-            <stream name="input/null" partitions="1" codec="avro" />
+            <!--  <stream name="statistics/history" partitions="1" codec="avro" />-->
             <computation name="statisticsHistory" concurrency="1" />
         </streamProcessor>
 
     </extension>
 
-
     <!--  This stream is populated by the StreamMetricsHistoryCollector that runs as a MetricsReporter -->
 	<extension point="logConfig" target="org.nuxeo.runtime.stream.service">
-	    <logConfig>
+	 <!--    <logConfig>
 	      <log name="statistics/history" size="1" />
-	    </logConfig>	  
+	    </logConfig> -->	  
 	</extension>
 </component>

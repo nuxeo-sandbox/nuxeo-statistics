@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.metrics.AbstractMetricsReporter;
+import org.nuxeo.statistics.aggregate.StatisticTSAggregateComputation;
 
 import io.dropwizard.metrics5.MetricAttribute;
 import io.dropwizard.metrics5.MetricFilter;
@@ -20,6 +21,7 @@ public class StreamStatisticsReporter extends AbstractMetricsReporter {
     protected ScheduledReporter reporter;
 
     protected static final MetricFilter STREAM_STATS_FILTER = MetricFilter.startsWith("nuxeo.statistics");
+
 
     @Override
     public void start(MetricRegistry registry, MetricFilter filter, Set<MetricAttribute> deniedExpansions) {

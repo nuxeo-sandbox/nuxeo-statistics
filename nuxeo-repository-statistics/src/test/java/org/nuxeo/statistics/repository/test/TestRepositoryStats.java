@@ -231,7 +231,7 @@ public class TestRepositoryStats {
 		String json = Framework.getService(StatisticsService.class).getStatisticsTimeSerieAsJson();
 		System.out.println(json);		
 		List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
-		assertTrue(ts.size()>2);
+		assertTrue(ts.size()>=2);
 		
 		// test Automation Operation
 		System.out.println("Checking via Automation API");	
@@ -245,7 +245,7 @@ public class TestRepositoryStats {
 	    
 	    String json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
-	    assertTrue(ts.size()>2);		
+	    assertTrue(ts.size()>=2);		
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.repository.documents.File.test"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified"));
 	    System.out.println(json2);
@@ -257,7 +257,7 @@ public class TestRepositoryStats {
 	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
 	    System.out.println("Filtered result=" + json2);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		
-	    assertTrue(ts.size()>2);
+	    assertTrue(ts.size()>=2);
 		
 	    assertFalse(ts.get(0).containsKey("nuxeo.statistics.repository.documents.File.test"));
 	    assertTrue(ts.get(0).containsKey("nuxeo.statistics.audit.events.documentModified")); 
@@ -265,7 +265,7 @@ public class TestRepositoryStats {
 	    // re run with filter on time
 	    ctx = new OperationContext(session);
 	    params.put("filter", "nuxeo.statistics.audit.events.*");
-	    params.put("duration", "6s");   
+	    params.put("duration", "15s");   
 	    json2 = (String) as.run(ctx, FetchStatisticOperation.ID, params);
 	    System.out.println("Filtered result=" + json2);
 	    ts = (List<Map<String, Long>> ) OBJECT_MAPPER.readValue(json2, new TypeReference<List<Map<String, Long>>>(){});		

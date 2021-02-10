@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.nuxeo.lib.stream.StreamRuntimeException;
 import org.nuxeo.lib.stream.codec.Codec;
 import org.nuxeo.lib.stream.computation.Record;
@@ -20,6 +22,7 @@ import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.cluster.ClusterService;
 import org.nuxeo.runtime.codec.CodecService;
 import org.nuxeo.runtime.stream.StreamService;
+import org.nuxeo.statistics.aggregate.StatisticTSAggregateComputation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +59,21 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 	protected String nodeId;
 
 	public static final String STATS_HISTORY_STREAM = "statistics/history";
+	
+	private static final Logger log = LogManager.getLogger(StreamMetricsHistoryCollector.class);
 
+	
+	public static Codec<Record> getCodec() {
+		if (Framework.getProperty("nuxeo.statistics.useCodec","true").equals("true")) {
+			return Framework.getService(CodecService.class).getCodec("avro", Record.class);	
+		}
+		return null;				
+	}
+	
+	protected boolean useStreamManager() {
+		return Framework.isBooleanPropertyTrue("nuxeo.statistics.useStreamManager");
+	}
+	
 	public StreamMetricsHistoryCollector(MetricRegistry registry, MetricFilter filter) {
 		super(registry, "stream-stats-reporter", filter, TimeUnit.SECONDS, TimeUnit.SECONDS);
 		try {
@@ -106,25 +123,46 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 		ret.put("timestamp", timestamp);
 		ret.put("hostname", hostname);
 		ret.put("ip", hostIp);
-		ret.put("nodeId", getNodeId());
+		ret.put("nodeId", getNodeId());	
 		ret.set("metrics", metrics);
 
+		LogAppender<Record> appender=null;
 		try {			
 			
 			Name streamName = Name.ofUrn(STATS_HISTORY_STREAM);
 			Record rec = Record.of(hostIp, OBJECT_MAPPER.writer().writeValueAsString(ret).getBytes(UTF_8));
 			
-			Codec<Record> codec = Framework.getService(CodecService.class).getCodec("avro", Record.class);		
-			LogAppender<Record> appender = service.getLogManager().getAppender(streamName,codec);			
-			appender.append(rec.getKey(), rec);					
-		
+			if (!useStreamManager() ) {
+				
+				Codec<Record> codec = getCodec();											
+				boolean created = service.getLogManager().createIfNotExists(streamName, 1);
+				if (created) {
+					log.warn("initialized log using LogManager with name " + streamName );
+					System.out.println("initialized log using LogManager with name " + streamName);
+				}
+				
+				if (codec==null) {
+					appender = service.getLogManager().getAppender(streamName);		
+					System.out.println("Appender wthout codec ");					
+				} else {
+					appender = service.getLogManager().getAppender(streamName, codec);		
+					System.out.println("Appender using codec " + appender.getCodec().getName());		
+				}
+				
+				appender.append(rec.getKey(), rec);				
+			} else {			
+				log.warn("initialize log using StreamManager with name " + streamName );
+				service.getStreamManager().append(STATS_HISTORY_STREAM, rec);
+			}
+			
 		} catch (JsonProcessingException e) {
 			throw new StreamRuntimeException("Cannot convert to json", e);
 		} catch (Exception e ) {
 			e.printStackTrace();
-		}		
+		} 	
 	}
 
+	
 	protected void reportTimer(ArrayNode metrics, MetricName key, Timer value) {
 		ObjectNode metric = OBJECT_MAPPER.createObjectNode();
 		metric.put("k", key.getKey());

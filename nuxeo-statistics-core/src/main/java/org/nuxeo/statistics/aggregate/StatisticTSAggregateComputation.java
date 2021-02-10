@@ -60,11 +60,20 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 	public void processTimer(ComputationContext context, String key, long timestamp) {
 		StreamService service = Framework.getService(StreamService.class);
 		if (service != null) {
-			Codec<Record> codec = Framework.getService(CodecService.class).getCodec("avro", Record.class);
+			Codec<Record> codec = StreamMetricsHistoryCollector.getCodec();						
 			LogTailer<Record> tailer = null;
 			try {
-				tailer = service.getLogManager().createTailer(Name.ofUrn("StatisticAggregator"),
-						Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM), codec);
+				if (codec!=null) {
+					tailer = service.getLogManager().createTailer(Name.ofUrn("StatisticAggregator"),
+							Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM), codec);				
+					log.warn("Created a Tailer using LogManager for stream " + StreamMetricsHistoryCollector.STATS_HISTORY_STREAM);
+					System.out.println("Tailer Codec = " + tailer.getCodec().getName());
+				} else {
+					tailer = service.getLogManager().createTailer(Name.ofUrn("StatisticAggregator"),
+							Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM));				
+					log.warn("Created a Tailer using LogManager for stream " + StreamMetricsHistoryCollector.STATS_HISTORY_STREAM);
+					System.out.println("Tailer Codec none");					
+				}
 			} catch (Exception e) {
 				log.error("Unale to open source stream:", e);
 				setTimer(context);
