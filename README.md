@@ -4,6 +4,21 @@ This addons allows precomputing statistics with custom computers which will then
 
 Statistics are also made available as metrics with no added cost when it comes to reporting since the values are effectively cached in the key value store.
 
+<table>
+<tr><td>
+<img src="doc/usage-grafana.png" width="400px"/>
+</td>
+<td>
+<img src="doc/nx-stats.png" width="400px"/>
+</td></tr>
+<tr><td>
+ App usage in System monitoring
+</td>
+<td>
+ App usage in Application Dashboard
+</td></tr>
+</table> 
+
 ## Principles
 
 ### Computing metrics asynchronously
