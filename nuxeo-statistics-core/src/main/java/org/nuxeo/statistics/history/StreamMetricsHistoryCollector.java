@@ -64,14 +64,7 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 
 	
 	public static Codec<Record> getCodec() {
-		if (Framework.getProperty("nuxeo.statistics.useCodec","true").equals("true")) {
-			return Framework.getService(CodecService.class).getCodec("avro", Record.class);	
-		}
-		return null;				
-	}
-	
-	protected boolean useStreamManager() {
-		return Framework.isBooleanPropertyTrue("nuxeo.statistics.useStreamManager");
+		return Framework.getService(CodecService.class).getCodec("avro", Record.class);	
 	}
 	
 	public StreamMetricsHistoryCollector(MetricRegistry registry, MetricFilter filter) {
@@ -132,29 +125,15 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 			Name streamName = Name.ofUrn(STATS_HISTORY_STREAM);
 			Record rec = Record.of(hostIp, OBJECT_MAPPER.writer().writeValueAsString(ret).getBytes(UTF_8));
 			
-			if (!useStreamManager() ) {
-				
-				Codec<Record> codec = getCodec();											
-				boolean created = service.getLogManager().createIfNotExists(streamName, 1);
-				if (created) {
-					log.warn("initialized log using LogManager with name " + streamName );
-					System.out.println("initialized log using LogManager with name " + streamName);
-				}
-				
-				if (codec==null) {
-					appender = service.getLogManager().getAppender(streamName);		
-					System.out.println("Appender wthout codec ");					
-				} else {
-					appender = service.getLogManager().getAppender(streamName, codec);		
-					System.out.println("Appender using codec " + appender.getCodec().getName());		
-				}
-				
-				appender.append(rec.getKey(), rec);				
-			} else {			
-				log.warn("initialize log using StreamManager with name " + streamName );
-				service.getStreamManager().append(STATS_HISTORY_STREAM, rec);
+			Codec<Record> codec = getCodec();											
+			boolean created = service.getLogManager().createIfNotExists(streamName, 1);
+			if (created) {
+				log.debug("initialized log using LogManager with name " + streamName );
 			}
 			
+			appender = service.getLogManager().getAppender(streamName, codec);						
+			appender.append(rec.getKey(), rec);	
+		
 		} catch (JsonProcessingException e) {
 			throw new StreamRuntimeException("Cannot convert to json", e);
 		} catch (Exception e ) {
