@@ -1,8 +1,9 @@
 # Nuxeo Statistics
 
-This addons allows precomputing statistics with custom computers which will then be stored in a key value store.
+This addon allows precomputing statistics with custom computers, which will then be stored in a key-value store.
 
-Statistics are also made available as metrics with no added cost when it comes to reporting since the values are effectively cached in the key value store.
+Statistics are also made available as metrics with no added cost.
+For efficiency reasons, the computed metric values are cached in the KV Store so that metrics can be retrieved for free.
 
 <table>
 <tr><td>
@@ -23,7 +24,7 @@ Statistics are also made available as metrics with no added cost when it comes t
 
 ### Computing metrics asynchronously
 
-The idea is to have asynchronous tasks running pediodically to compute some statistics.
+The idea is to have asynchronous tasks running periodically to compute some statistics.
 
 Technically, the Nuxeo-Stream computation system is used to:
 
@@ -42,17 +43,17 @@ The fact that the statistics are exposed via metrics provide a few key advantage
  - you can easily add a TSDB to store the evolution on the time dimension
  - you can leverage existing tools for graphing
 
-### Levrage Stream for metrics history retention
+### Leverage Stream for metrics history retention
 
-While some dashboard can be built using native TSDB and tools like Grafana/Graphite, we also want to allow application to build Application level dashboard without having to bridge the "Ops Dashboard" system with the application layed (Network accessibility, security ...).
+While some dashboards can be built using native TSDB and tools like Grafana/Graphite, we also want to allow projects to build Application level dashboard without having to bridge the "Ops Dashboard" system with the application layer (Network accessibility, security ...).
 
 The idea is to periodically collect a set of metrics (the statistic metrics but also potentially others) and archive them as a record in a Nuxeo stream.
-This way, the target Nuxeo Stream becomes a history of the metrics snapshots and the underlying Kafka topic retention allows to control for how long we want to keep history.
+This way, the target Nuxeo Stream becomes a history of the metrics snapshots, and the underlying Kafka topic retention allows to control how long we want to keep history.
 
-### Application level Aggregates and API
+### Application-level Aggregates and API
 
-Using a Computation we can read the whole history available in Nuxeo Stream, compute an aggregate and store the result in the KVStore.
-Then using a simple Automation Operation we can retrive the full time-series for all metrics and use this to plot graphs on the client side.
+Using a Computation, we can read the whole history available in Nuxeo Stream, compute an aggregate and store the result in the KVStore.
+Using a simple Automation Operation, we can retrieve the full time-series for all metrics and plot graphs on the client-side.
 
 ### Logical Architecture
 
@@ -66,7 +67,7 @@ The Metric name is `nuxeo.statistics.repository.documents`.
 The tags added to the Metric are:
     - `repository` for the repository name
     - `doctype` for the document type
-The value is the number of document for the given document type in the target repository.
+The value is the number of documents for the given document type in the target repository.
 
 Typically, on a repository called default and having only 3 documents we would get:
 
@@ -75,7 +76,7 @@ Typically, on a repository called default and having only 3 documents we would g
 
 ### Blobs size 
 
-The total size of main blobs is computed and exposed via a metric.
+The total size of the main blobs is computed and exposed via a metric.
 
 The Metric name is `nuxeo.statistics.repository.blobs.mainBlobs`.
 The tags added to the Metric are:
@@ -102,9 +103,17 @@ If during the last hour 3 documents were created and 1 modified:
 
 ### Active Users statistics
 
-The number of active users if computed by extracting unique users associated to events in the Audit log over the last hour.
+The number of active users is computed by extracting unique users associated with events in the Audit log over the last hour.
+
+The assumption is that if a user was active during the last hour, we should find in Audit at least one of the following events:
+
+login or logout
+download a file
+search
+create / update
 
 The Metric name is `nuxeo.statistics.active.users`.
+
 There are no tags added to this Metric.
 
 ## API
@@ -157,14 +166,14 @@ This operation supports 2 types of call:
         }
     ]
 
-### String input : retrieve value for one metric
+### String input : retrieve the current value for one metric
 
  - operation: `Statistics.Fetch`
  - input: metric name
  - parameter: none
  - return: Long (value of the metric)
 
-Because metric name have also dimensions (i.e. repository, event name, doctype ...), you need to build a metric name that also include the dimension you want.
+Because metric names also have dimensions (i.e. repository, event name, doctype ...), you need to build a metric name that also includes the dimension you want.
 
 Typically, for `nuxeo.statistics.repository.blobs.mainBlobs{repository=default}`, the target name to use as input is:
 
@@ -184,13 +193,13 @@ The statistics are computed using several periodic tasks:
 
 **Step 1 - StatisticsComputer - compute the metric:**
 
-`StatisticsComputer` are contributed to `StatisticsService` and are in charge to compute some metrics.
+`StatisticsComputer`s are contributed to `StatisticsService` and are in charge of computing some metrics.
 Typically:
 
  - `ESAuditStatisticsComputer`: compute metrics based on Audit log in Elasticsearch
  - `ESRepositoryStatisticsComputer`: computes metrics related to the Document Repository using Elasticsearch index
 
- Each `StatisticsComputer` defines it's refresh interval and is run by it's own `StatisticsComputation`.
+ Each `StatisticsComputer` defines its refresh interval and is run by its own `StatisticsComputation`.
 
 **Step 2 - MetricsHistoryCollector - Capture Snapshots of metrics**
 
@@ -203,24 +212,24 @@ At this level, you can configure:
 
 **Step 3 - StatisticTSAggregate - Compite Timeseries aggregations**
 
-`StatisticTSAggregateComputation` is a scheduled computation that is in charge to aggregate all metrics available in `statistics/history`.
+`StatisticTSAggregateComputation` is a scheduled computation that is in charge of aggregating all metrics available in `statistics/history`.
 
 At this level, you can configure:
 
  - periodicity of aggregations
- - retention is managed directy at the nuxeo-stream/Kafka level
+ - retention is managed directly at the nuxeo-stream/Kafka level
 
 ### Configure StatisticsComputer
 
-`StatisticsComputer` are directly contributed to the `StatisticsService`
+`StatisticsComputer`s are directly contributed to the `StatisticsService`
 
     <extension point="computers" target="org.nuxeo.statistics.service">
-    	<computer name="repository" 
+        <computer name="repository" 
             interval="5m" 
             class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
     </extension>
 
-If unst the interval will be take from `nuxeo.conf` using the property
+If unset, the interval will be taken from `nuxeo.conf` using the property
 
     nuxeo.statistics.computer.default.interval=1h
 
@@ -238,7 +247,7 @@ XXX Filter is not yet configurable.
 
 ### Configure TSAggregate
 
-Aggregate scheduled computation can be comnfigured using `nuxeo.conf`
+Aggregate scheduled computation can be configured using `nuxeo.conf`
 
     nuxeo.statistics.aggregate.default.interval=5m
 

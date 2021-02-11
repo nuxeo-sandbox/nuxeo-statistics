@@ -3,9 +3,9 @@
 
     <extension point="computers" target="org.nuxeo.statistics.service">
 
-    	<computer name="repository" interval="5m" class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
+    	<computer name="repository" class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
 
-    	<computer name="audit" interval="5m" class="org.nuxeo.statistics.repository.impl.ESAuditStatisticsComputer" />
+    	<computer name="audit" class="org.nuxeo.statistics.repository.impl.ESAuditStatisticsComputer" />
 
     </extension>
 

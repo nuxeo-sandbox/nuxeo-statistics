@@ -20,6 +20,7 @@ package org.nuxeo.statistics.stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.lib.stream.computation.AbstractComputation;
 import org.nuxeo.lib.stream.computation.ComputationContext;
 import org.nuxeo.lib.stream.computation.Record;
@@ -39,14 +40,18 @@ public class StatisticsComputation extends AbstractComputation {
 
     protected final String computer;
 
-    protected final long intervalMs;
+    protected long intervalMs;
 
     public StatisticsComputation(String computer, Duration interval) {
         super("statistics/" + computer, 1, 0);
-        this.computer = computer;
-        this.intervalMs = interval.toMillis();
+        this.computer = computer;       
+        if (Framework.isTestModeSet()) {
+    		this.intervalMs = 5*1000L;
+    	} else {
+    		this.intervalMs = interval.toMillis();	
+    	}
     }
-
+    
     @Override
     public void init(ComputationContext context) {
         if (!context.isSpareComputation()) {
