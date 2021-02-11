@@ -118,6 +118,11 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 		ret.put("ip", hostIp);
 		ret.put("nodeId", getNodeId());	
 		ret.set("metrics", metrics);
+		
+		if (metrics.size()==0) {
+			// do not store empty metric report!
+			return;
+		}
 
 		LogAppender<Record> appender=null;
 		try {			

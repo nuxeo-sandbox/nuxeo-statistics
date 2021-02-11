@@ -29,6 +29,7 @@ import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.nuxeo.elasticsearch.ElasticSearchConstants;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
@@ -46,7 +47,7 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 
 	@Override
 	public Map<MetricName, Long> get() {
-		return getCountsPerEventTypes();
+		return computeEventCountMetrics();
 	}
 	
 	 protected String getESIndexName() {
@@ -58,12 +59,13 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 		return new SearchRequest(getESIndexName()).searchType(SearchType.DFS_QUERY_THEN_FETCH);
 	}
 
-	protected Map<MetricName, Long> getCountsPerEventTypes() {
+	protected Map<MetricName, Long> computeEventCountMetrics() {
 
 		Map<MetricName, Long> ret = new LinkedHashMap<>();
 		SearchRequest searchRequest = searchRequest();
 
-		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20)
+		// count events
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(0)
 				.query(QueryBuilders.rangeQuery("eventDate").gte("now-1h"))
 				.aggregation(AggregationBuilders.terms("eventId").field("eventId"));
 		
@@ -80,6 +82,23 @@ public class ESAuditStatisticsComputer extends BaseESStatisticsComputer {
 		} catch (Exception e) {
 			log.error("Failed to get Type Cardinality", e);
 		}
+		
+		// count active users	
+		searchRequest = searchRequest();
+		sourceBuilder = new SearchSourceBuilder().size(0)
+				.query(QueryBuilders.rangeQuery("eventDate").gte("now-1h"))
+				.aggregation(AggregationBuilders.cardinality("users").field("principalName"));
+		searchRequest.source(sourceBuilder);
+		
+		try {
+			SearchResponse response = getClient().search(searchRequest);			
+			ParsedCardinality pc = response.getAggregations().get("users");	
+			MetricName mn = mkMetricName("active", "users");
+			ret.put(mn, pc.getValue());
+					} catch (Exception e) {
+			log.error("Failed to get Active Users count", e);
+		}
+
 		return ret;
 	}
 

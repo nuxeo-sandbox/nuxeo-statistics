@@ -19,6 +19,7 @@ Statistics are also made available as metrics with no added cost when it comes t
 </td></tr>
 </table> 
 
+
 ## Principles
 
 ### Computing metrics asynchronously
@@ -62,10 +63,6 @@ Then using a simple Automation Operation we can retrive the full time-series for
 
 ### Document Counts
 
-
-nuxeo.statistics.audit.event{event=documentCreated}:3
-nuxeo.statistics.audit.event{event=documentModified}:1
-
 The Metric name is `nuxeo.statistics.repository.documents`.
 The tags added to the Metric are:
     - `repository` for the repository name
@@ -103,6 +100,13 @@ If during the last hour 3 documents were created and 1 modified:
 
     nuxeo.statistics.audit.events{event=documentCreated}:3
     nuxeo.statistics.audit.events{event=documentModified}:1
+
+### Active Users statistics
+
+The number of active users if computed by extracting unique users associated to events in the Audit log over the last hour.
+
+The Metric name is `nuxeo.statistics.active.users`.
+There are no tags added to this Metric.
 
 ## API
 

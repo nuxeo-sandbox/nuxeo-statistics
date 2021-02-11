@@ -79,7 +79,10 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 				do {
 					entry = tailer.read(Duration.ofSeconds(1));
 					if (entry != null) {
-						result.add(aggregate(entry.message()));
+						Map<String, Long> agg = aggregate(entry.message());
+						if (agg.size()>1) {
+							result.add(agg);
+						}
 					}
 				} while (entry != null);
 			} catch (Exception e) {

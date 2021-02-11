@@ -76,15 +76,9 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
         data="{{documentsStats}}"
       ></nuxeo-statistics-data>
 
-      <!-- Document count per type -->
-      <nuxeo-card heading="[[i18n('statistics.documentTypes.heading')]]">
-        <chart-pie
-          values="[[_values(documents)]]"
-          labels="[[_labels(documents)]]"
-          options='{ "legend": { "display": true, "position": "bottom", "labels": { "boxWidth": 12 } }, "animation": false }'
-        >
-        </chart-pie>
-      </nuxeo-card>
+      <nuxeo-statistics-data metric="repository.blobs.mainBlobs.default" data="{{blobsStats}}"></nuxeo-statistics-data>
+
+      <nuxeo-statistics-data metric="active.users" data="{{usersStats}}"></nuxeo-statistics-data>
 
       <!-- Document count per type over time -->
       <nuxeo-card heading="[[i18n('statistics.documentTypes.heading')]]">
@@ -93,6 +87,26 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
           labels="[[documentsTS.labels]]"
           series="[[documentsTS.series]]"
         ></chart-line>
+      </nuxeo-card>
+
+      <!-- Blob volume over time -->
+      <nuxeo-card heading="[[i18n('statistics.blobs.heading')]]">
+        <chart-line values="[[blobsTS.values]]" labels="[[blobsTS.labels]]" series="[[blobsTS.series]]"></chart-line>
+      </nuxeo-card>
+
+      <!-- Active users over time -->
+      <nuxeo-card heading="[[i18n('statistics.users.heading')]]">
+        <chart-line values="[[usersTS.values]]" labels="[[usersTS.labels]]" series="[[usersTS.series]]"></chart-line>
+      </nuxeo-card>
+
+      <!-- Document count per type -->
+      <nuxeo-card heading="[[i18n('statistics.documentTypes.heading')]]">
+        <chart-pie
+          values="[[_values(documents)]]"
+          labels="[[_labels(documents)]]"
+          options='{ "legend": { "display": true, "position": "bottom", "labels": { "boxWidth": 12 } }, "animation": false }'
+        >
+        </chart-pie>
       </nuxeo-card>
     `;
   }
@@ -107,6 +121,16 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
         type: Object,
         observer: '_documentsStatsChanged',
       },
+      blobsStats: {
+        type: Object,
+        observer: '_blobsStatsChanged',
+      },
+      usersStats: {
+        type: Object,
+        observer: '_usersStatsChanged',
+      },
+      usersTS: Object,
+      blobsTS: Object,
       documentsTS: Object,
       documents: Object,
     };
@@ -125,6 +149,14 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
     const documents = { ...data[data.length - 1] };
     delete documents.ts;
     this.documents = documents;
+  }
+
+  _blobsStatsChanged(data) {
+    this.blobsTS = _buildTS(data);
+  }
+
+  _usersStatsChanged(data) {
+    this.usersTS = _buildTS(data);
   }
 }
 

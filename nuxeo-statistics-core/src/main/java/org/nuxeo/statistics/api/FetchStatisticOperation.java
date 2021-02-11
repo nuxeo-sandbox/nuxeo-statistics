@@ -94,11 +94,13 @@ public class FetchStatisticOperation {
 				if (start != null && end != null) {
 					long t = filterdMetrics.get("ts");
 
-					if (t <= start && t >= end) {
+					if (t <= start && t >= end && filterdMetrics.size()>1) {
 						filtered.add(filterdMetrics);
 					}
 				} else {
-					filtered.add(filterdMetrics);
+					if (filterdMetrics.size()>1) {
+						filtered.add(filterdMetrics);
+					}
 				}
 			}
 			return OBJECT_MAPPER.writer().writeValueAsString(filtered);

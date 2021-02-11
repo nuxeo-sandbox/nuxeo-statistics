@@ -17,6 +17,8 @@ import java.util.SortedMap;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,6 +81,26 @@ public class TestRepositoryStats {
 		addSomeContent();
 	
 		SearchRequest req = new SearchRequest("audit");		
+		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(0).
+				query(QueryBuilders.matchAllQuery())
+				.aggregation(AggregationBuilders.terms("users").field("principalName"));
+		req.source(sourceBuilder);
+		SearchResponse response = esa.getClient().search(req);
+		
+		Terms terms = response.getAggregations().get("users");
+		for (Terms.Bucket term : terms.getBuckets()) {
+			System.out.println(term.getKeyAsString() + ":" + term.getDocCount());
+		}
+
+		System.out.println(response.toString());
+		System.out.println(" #events= " + response.getHits().getTotalHits().value);
+	}
+	
+	//@Test
+	public void stupid2() throws Exception{
+		addSomeContent();
+	
+		SearchRequest req = new SearchRequest("audit");		
 		SearchSourceBuilder sourceBuilder = new SearchSourceBuilder().size(20).
 				query(QueryBuilders.matchAllQuery());
 		req.source(sourceBuilder);
@@ -86,6 +108,7 @@ public class TestRepositoryStats {
 		System.out.println(response.toString());
 		System.out.println(" #events= " + response.getHits().getTotalHits().value);
 	}
+	
 	
 		
 	@Inject
@@ -129,7 +152,7 @@ public class TestRepositoryStats {
 		file2.setPropertyValue("dc:description", "Modified");
 		file2 = session.saveDocument(file2);
 		
-		fireAuthEvent();
+		fireUserEvents();
 		
 		session.save();
 		TransactionHelper.commitOrRollbackTransaction();
@@ -143,17 +166,29 @@ public class TestRepositoryStats {
 		assertNotEquals(0, allDocs.size());
 	}
 	
-	protected void fireAuthEvent() {
-		 NuxeoPrincipal principal = new UserPrincipal("JackyChan", null, false, false);
+	protected void fireUserEvents() {
+		
+		for (int i = 0; i < 5; i++) {
+			
+		
+		 NuxeoPrincipal principal = new UserPrincipal("JackyChan"+i, null, false, false);
 
          Map<String, Serializable> props = new HashMap<>();
          props.put("AuthenticationPlugin", "foobar");
          props.put("category", "NuxeoAuthentication");
          props.put("comment", "This is a login");
-
          EventContext ctx = new UnboundEventContext(principal, props);
 
          eventService.fireEvent(ctx.newEvent("loginSuccess"));
+		}
+
+		for (int i = 0; i < 3; i++) {
+			 NuxeoPrincipal principal = new UserPrincipal("JackyChan"+i, null, false, false);
+	         Map<String, Serializable> props = new HashMap<>();
+	         props.put("category", "Document");
+	         EventContext ctx = new UnboundEventContext(principal, props);
+	         eventService.fireEvent(ctx.newEvent("download"));
+		}
 	}
 	
 	@Test
@@ -204,6 +239,11 @@ public class TestRepositoryStats {
 				foundMetrics++;		
 			}
 			
+			if (mn.getKey().startsWith("nuxeo.statistics.active.users")) {
+				// 5 Jackies + Administrator + System
+				assertEquals(7L,gauges.get(mn).getValue());
+				foundMetrics++;		
+			}
 			if (mn.getKey().startsWith("nuxeo.statistics.audit.events")) {
 				if (mn.getTags().values().contains("documentCreated")) {
 					// 3 created + 4 from Content Template because of Automation feature
@@ -215,14 +255,18 @@ public class TestRepositoryStats {
 					foundMetrics++;
 				}
 				else if (mn.getTags().values().contains("loginSuccess")) {
-					assertEquals(1L,gauges.get(mn).getValue());
+					assertEquals(5L,gauges.get(mn).getValue());
+					foundMetrics++;
+				}
+				else if (mn.getTags().values().contains("download")) {
+					assertEquals(3L,gauges.get(mn).getValue());
 					foundMetrics++;
 				}
 			}
 			
 			System.out.println(mn.toString() + ":" + gauges.get(mn).getValue());
 		}
-		assertEquals(6, foundMetrics);
+		assertEquals(8, foundMetrics);
 	
 		// check that TS were computed
 		System.out.println("##############################");	
