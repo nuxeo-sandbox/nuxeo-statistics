@@ -18,8 +18,10 @@
  */
 package org.nuxeo.statistics;
 
+import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XObject;
+import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.model.Descriptor;
 
 import io.dropwizard.metrics5.MetricName;
@@ -31,7 +33,9 @@ import java.util.function.Supplier;
 @XObject(value = "computer")
 public class StatisticsComputer implements Supplier<Map<MetricName, Long>>, Descriptor {
 
-    public static final Duration DEFAULT_INTERVAL = Duration.ofHours(1);
+	public static final String DEFAULT_INTERVAL_PROP_NAME = "nuxeo.statistics.computer.default.interval";
+	
+    public static final Duration DEFAULT_INTERVAL = DurationUtils.parse(Framework.getProperty(DEFAULT_INTERVAL_PROP_NAME, "1h"));
 
     @XNode("@name")
     public String name;

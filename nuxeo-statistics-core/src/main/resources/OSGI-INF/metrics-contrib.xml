@@ -3,7 +3,7 @@
 
   <extension target="org.nuxeo.runtime.metrics.MetricsService" point="reporter">
 
-    <reporter name="statisticHistory" pollInterval="60"
+    <reporter name="statisticHistory"
       class="org.nuxeo.statistics.history.StreamStatisticsReporter">
     </reporter>
 

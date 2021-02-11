@@ -2,9 +2,9 @@
 <package type="addon" name="nuxeo-statistics" version="@VERSION@">
   <title>Nuxeo Statistic</title>
   <description>
-    <p>Put here an HTML description of your Nuxeo Package.</p>
+    <p>This package provides infrastructure to compute statistics about nuxeo usage and display them either in a monitoring tool or inside Nuxeo Dashboards.</p>
   </description>
-  <!-- <home-page>http://doc.nuxeo.com/</home-page> -->
+  <home-page>https://github.com/nuxeo-sandbox/nuxeo-statistics</home-page>
   <vendor>nuxeo</vendor>
   <installer restart="true" />
   <uninstaller restart="true" />
@@ -37,5 +37,5 @@
   <license></license>
   <license-url></license-url>
   <!-- Visibility: PRIVATE | MARKETPLACE | DEV | PUBLIC -->
-  <visibility>DEV</visibility>
+  <visibility>MARKETPLACE</visibility>
 </package>

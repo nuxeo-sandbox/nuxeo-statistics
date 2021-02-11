@@ -1,10 +1,12 @@
 package org.nuxeo.statistics.history;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.metrics.AbstractMetricsReporter;
 import org.nuxeo.statistics.aggregate.StatisticTSAggregateComputation;
@@ -22,6 +24,7 @@ public class StreamStatisticsReporter extends AbstractMetricsReporter {
 
     protected static final MetricFilter STREAM_STATS_FILTER = MetricFilter.startsWith("nuxeo.statistics");
 
+    public static final String DEFAULT_INTERVAL_PROP_NAME = "nuxeo.statistics.snapshot.default.interval";
 
     @Override
     public void start(MetricRegistry registry, MetricFilter filter, Set<MetricAttribute> deniedExpansions) {
@@ -34,7 +37,8 @@ public class StreamStatisticsReporter extends AbstractMetricsReporter {
     	if (Framework.isTestModeSet()) {
     		return 10L;
     	}
-    	return super.getPollInterval();
+    	Duration d = DurationUtils.parse(Framework.getProperty(DEFAULT_INTERVAL_PROP_NAME, "5m"));     
+    	return d.toSeconds();
     }
     
     @Override

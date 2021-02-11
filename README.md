@@ -19,7 +19,6 @@ Statistics are also made available as metrics with no added cost when it comes t
 </td></tr>
 </table> 
 
-
 ## Principles
 
 ### Computing metrics asynchronously
@@ -176,6 +175,74 @@ For `nuxeo.statistics.repository.documents{doctype=File, repository=default}`
     nuxeo.statistics.repository.documents.File.test
 
 Values for the tags are appended to the metric name using the alphabetical order of the tagNames.
+
+## Configuration
+
+### Understanding the different layers
+
+The statistics are computed using several periodic tasks:
+
+**Step 1 - StatisticsComputer - compute the metric:**
+
+`StatisticsComputer` are contributed to `StatisticsService` and are in charge to compute some metrics.
+Typically:
+
+ - `ESAuditStatisticsComputer`: compute metrics based on Audit log in Elasticsearch
+ - `ESRepositoryStatisticsComputer`: computes metrics related to the Document Repository using Elasticsearch index
+
+ Each `StatisticsComputer` defines it's refresh interval and is run by it's own `StatisticsComputation`.
+
+**Step 2 - MetricsHistoryCollector - Capture Snapshots of metrics**
+
+`StreamMetricsHistoryCollector` is deployed via a `MetricsReporter` and is in charge of capturing some metrics and save their value in the nuxeo stream `statistics/history`.
+
+At this level, you can configure:
+
+ - metrics filters
+ - periodicity
+
+**Step 3 - StatisticTSAggregate - Compite Timeseries aggregations**
+
+`StatisticTSAggregateComputation` is a scheduled computation that is in charge to aggregate all metrics available in `statistics/history`.
+
+At this level, you can configure:
+
+ - periodicity of aggregations
+ - retention is managed directy at the nuxeo-stream/Kafka level
+
+### Configure StatisticsComputer
+
+`StatisticsComputer` are directly contributed to the `StatisticsService`
+
+    <extension point="computers" target="org.nuxeo.statistics.service">
+    	<computer name="repository" 
+            interval="5m" 
+            class="org.nuxeo.statistics.repository.impl.ESRepositoryStatisticsComputer" />
+    </extension>
+
+If unst the interval will be take from `nuxeo.conf` using the property
+
+    nuxeo.statistics.computer.default.interval=1h
+
+NB: 1h is the default value.
+
+### Configure MetricsHistoryCollector
+
+The metric history collector will run periodically using interval from `nuxeo.conf`
+
+    nuxeo.statistics.snapshot.default.interval=5m
+
+NB: 5m is the default value.
+
+XXX Filter is not yet configurable.
+
+### Configure TSAggregate
+
+Aggregate scheduled computation can be comnfigured using `nuxeo.conf`
+
+    nuxeo.statistics.aggregate.default.interval=5m
+
+NB: 5m is the default value.
 
 ## About Nuxeo
 

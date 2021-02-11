@@ -11,6 +11,7 @@ import javax.ws.rs.core.Context;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
@@ -55,16 +56,8 @@ public class FetchStatisticOperation {
 			} else if (start != null && duration == null) {
 				duration = "1y";
 			}
-			if (start != null && duration != null) {
-				duration = duration.toUpperCase();
-				if (!duration.startsWith("P")) {
-					if (duration.contains("D")) {
-						duration = "P" + duration;
-					} else {
-						duration = "PT" + duration;
-					}
-				}
-				end = start - Duration.parse(duration).getSeconds();
+			if (start != null && duration != null) {		
+				end = start - DurationUtils.parse(duration).getSeconds();
 			}
 
 			List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
