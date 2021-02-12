@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="org.nuxeo.statistics.custom.computers.contrib" version="1.0">
+
+    <extension point="computers" target="org.nuxeo.statistics.service">
+
+    	<computer name="custom" class="org.nuxeo.statistics.custom.CustomStatisticsComputerSample" />
+
+    </extension>
+
+</component>

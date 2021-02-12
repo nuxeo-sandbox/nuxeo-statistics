@@ -138,7 +138,7 @@ This operation supports 2 types of call:
             - "5d" will be understood as 5 days
         - if `start` is not set it will be initialized to `System.currentTimeMillis()/1000`
         - all metrics returned will have a start-duration <= timestamp <= start
-        
+    - `maxValues` : maximum number of points to return. Extra data points will be merged using a simple average.
  - return: JSON [{metric1_ts1, metric2_ts1 ... ts1} {metric1_ts2, metric2_ts2 ... ts2} ... ]
 
     [

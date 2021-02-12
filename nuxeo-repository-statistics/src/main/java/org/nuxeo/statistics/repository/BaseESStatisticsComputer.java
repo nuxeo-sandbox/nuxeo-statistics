@@ -21,6 +21,7 @@ package org.nuxeo.statistics.repository;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.client.ESRestClient;
 import org.nuxeo.runtime.api.Framework;
+import org.nuxeo.statistics.AbstractStatisticsComputer;
 
 public abstract class BaseESStatisticsComputer extends AbstractStatisticsComputer {
    

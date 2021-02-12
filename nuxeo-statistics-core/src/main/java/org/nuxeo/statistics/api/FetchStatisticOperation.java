@@ -1,17 +1,12 @@
 package org.nuxeo.statistics.api;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Context;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.ecm.automation.core.Constants;
 import org.nuxeo.ecm.automation.core.annotations.Operation;
 import org.nuxeo.ecm.automation.core.annotations.OperationMethod;
@@ -38,6 +33,9 @@ public class FetchStatisticOperation {
 	@Param(name = "duration", required = false)
 	protected String duration = null;
 
+	@Param(name = "maxValues", required = false)
+	protected Integer maxValues = null;
+
 	@Context
 	protected CoreSession session;
 
@@ -48,17 +46,7 @@ public class FetchStatisticOperation {
 
 		StatisticsService service = Framework.getService(StatisticsService.class);
 
-		if (filter != null || start != null || duration != null) {
-
-			Long end = null;
-			if (start == null && duration != null) {
-				start = System.currentTimeMillis() / 1000;
-			} else if (start != null && duration == null) {
-				duration = "1y";
-			}
-			if (start != null && duration != null) {		
-				end = start - DurationUtils.parse(duration).getSeconds();
-			}
+		if (filter != null || start != null || duration != null || maxValues != null) {
 
 			List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
 
@@ -66,37 +54,11 @@ public class FetchStatisticOperation {
 				log.warn("No data available yet");
 				return "[]";
 			}
-			List<Map<String, Long>> filtered = new ArrayList<>();
 
-			Pattern regexp = null;
-
-			if (filter != null) {
-				regexp = Pattern.compile(filter);
-			}
-
-			for (Map<String, Long> metrics : ts) {
-
-				Map<String, Long> filterdMetrics = new HashMap<>();
-
-				for (String key : metrics.keySet()) {
-					if ("ts".equals(key) || regexp.matcher(key).matches()) {
-						filterdMetrics.put(key, metrics.get(key));
-					}
-				}
-
-				if (start != null && end != null) {
-					long t = filterdMetrics.get("ts");
-
-					if (t <= start && t >= end && filterdMetrics.size()>1) {
-						filtered.add(filterdMetrics);
-					}
-				} else {
-					if (filterdMetrics.size()>1) {
-						filtered.add(filterdMetrics);
-					}
-				}
-			}
+			MetricsFilter mf = new MetricsFilter(filter, start, duration, maxValues);			
+			List<Map<String, Long>> filtered = mf.process(ts);
 			return OBJECT_MAPPER.writer().writeValueAsString(filtered);
+			
 		} else {
 			return service.getStatisticsTimeSerieAsJson();
 		}
@@ -104,9 +66,7 @@ public class FetchStatisticOperation {
 
 	@OperationMethod
 	public Long run(String statisticName) throws Exception {
-
 		StatisticsService service = Framework.getService(StatisticsService.class);
-
 		return service.getStatistic(statisticName);
 	}
 

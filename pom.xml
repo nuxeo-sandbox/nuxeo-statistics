@@ -19,6 +19,7 @@
     <module>nuxeo-statistics-core</module>
     <module>nuxeo-repository-statistics</module>
     <module>nuxeo-statistics-web-ui</module>
+    <module>custom-statistics-sample</module>
     <module>package</module>
   </modules>
 

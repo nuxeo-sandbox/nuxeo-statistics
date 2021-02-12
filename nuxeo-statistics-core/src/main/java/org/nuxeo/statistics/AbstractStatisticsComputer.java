@@ -16,7 +16,7 @@
  * Contributors:
  *      Tiry
  */
-package org.nuxeo.statistics.repository;
+package org.nuxeo.statistics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
