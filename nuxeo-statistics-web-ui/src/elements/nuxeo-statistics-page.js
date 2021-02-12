@@ -23,6 +23,14 @@ import '@nuxeo/nuxeo-ui-elements/widgets/nuxeo-date-picker.js';
 import '@nuxeo/nuxeo-elements/nuxeo-operation.js';
 import './nuxeo-statistics-data.js';
 
+const _cleanLabels = (labels) =>
+  labels.map((l, i) => {
+    const p = labels[i - 1] || '';
+    const [pdate] = p.split(' ');
+    const [date, time] = l.split(' ');
+    return date !== pdate ? l : time;
+  });
+
 const _buildTS = (data) => {
   const ts = [];
   const datasets = {};
@@ -39,7 +47,7 @@ const _buildTS = (data) => {
     });
   });
   return {
-    labels: ts,
+    labels: _cleanLabels(ts),
     values: Object.values(datasets),
     series: Object.keys(datasets),
   };
@@ -50,8 +58,8 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
     return html`
       <style include="iron-flex iron-flex-alignment">
         :host {
-          display: flex;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
           padding: 0 8px;
         }
 
@@ -91,12 +99,22 @@ class StatisticsPage extends mixinBehaviors([I18nBehavior], PolymerElement) {
 
       <!-- Blob volume over time -->
       <nuxeo-card heading="[[i18n('statistics.blobs.heading')]]">
-        <chart-line values="[[blobsTS.values]]" labels="[[blobsTS.labels]]" series="[[blobsTS.series]]"></chart-line>
+        <chart-line
+          values="[[blobsTS.values]]"
+          labels="[[blobsTS.labels]]"
+          series="[[blobsTS.series]]"
+          options='{ "legend": { "display": false }, "scales": { "yAxes": [{ "ticks": { "beginAtZero": true } }] } }'
+        ></chart-line>
       </nuxeo-card>
 
       <!-- Active users over time -->
       <nuxeo-card heading="[[i18n('statistics.users.heading')]]">
-        <chart-line values="[[usersTS.values]]" labels="[[usersTS.labels]]" series="[[usersTS.series]]"></chart-line>
+        <chart-line
+          values="[[usersTS.values]]"
+          labels="[[usersTS.labels]]"
+          series="[[usersTS.series]]"
+          options='{ "legend": { "display": false }, "scales": { "yAxes": [{ "ticks": { "beginAtZero": true } }] } }'
+        ></chart-line>
       </nuxeo-card>
 
       <!-- Document count per type -->
