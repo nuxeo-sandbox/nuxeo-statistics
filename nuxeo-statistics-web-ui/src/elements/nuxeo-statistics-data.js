@@ -52,7 +52,14 @@ class StatisticsData extends Nuxeo.Element {
   }
 
   static get template() {
-    return html` <nuxeo-operation id="op" op="Statistics.Fetch"></nuxeo-operation> `;
+    return html`
+      <style>
+        :host {
+          display: none;
+        }
+      </style>
+      <nuxeo-operation id="op" op="Statistics.Fetch"></nuxeo-operation>
+    `;
   }
 
   ready() {
