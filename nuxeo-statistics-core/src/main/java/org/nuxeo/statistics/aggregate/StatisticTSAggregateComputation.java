@@ -17,7 +17,6 @@ import org.nuxeo.lib.stream.log.LogRecord;
 import org.nuxeo.lib.stream.log.LogTailer;
 import org.nuxeo.lib.stream.log.Name;
 import org.nuxeo.runtime.api.Framework;
-import org.nuxeo.runtime.codec.CodecService;
 import org.nuxeo.runtime.stream.StreamService;
 import org.nuxeo.statistics.MetricsNameHelper;
 import org.nuxeo.statistics.StatisticsService;
@@ -60,15 +59,16 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 	public void processTimer(ComputationContext context, String key, long timestamp) {
 		StreamService service = Framework.getService(StreamService.class);
 		if (service != null) {
-			Codec<Record> codec = StreamMetricsHistoryCollector.getCodec();						
+			Codec<Record> codec = StreamMetricsHistoryCollector.getCodec();
 			LogTailer<Record> tailer = null;
 			try {
 				tailer = service.getLogManager().createTailer(Name.ofUrn("StatisticAggregator"),
-						Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM), codec);				
-				log.debug("Created a Tailer using LogManager for stream " + StreamMetricsHistoryCollector.STATS_HISTORY_STREAM);
-				log.debug("Tailer Codec = " + tailer.getCodec().getName());	
+						Name.ofUrn(StreamMetricsHistoryCollector.STATS_HISTORY_STREAM), codec);
+				log.debug("Created a Tailer using LogManager for stream "
+						+ StreamMetricsHistoryCollector.STATS_HISTORY_STREAM);
+				log.debug("Tailer Codec = " + tailer.getCodec().getName());
 			} catch (Exception e) {
-				log.error("Unale to open source stream:", e);
+				log.error("Unable to open source stream - skipping aggregate computation for now");
 				setTimer(context);
 				return;
 			}
@@ -80,7 +80,7 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 					entry = tailer.read(Duration.ofSeconds(1));
 					if (entry != null) {
 						Map<String, Long> agg = aggregate(entry.message());
-						if (agg.size()>1) {
+						if (agg.size() > 1) {
 							result.add(agg);
 						}
 					}
@@ -90,9 +90,9 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 			} finally {
 				// close without committing position
 				// because we want to read from the beginning each time!
-				tailer.close();				
+				tailer.close();
 			}
-			if (result.size()>0) {
+			if (result.size() > 0) {
 				Framework.getService(StatisticsService.class).storeStatisticsTimeSerie(result);
 			}
 		}
@@ -125,12 +125,12 @@ public class StatisticTSAggregateComputation extends AbstractComputation {
 	protected String buildMetricKey(JsonNode metricData, String name) {
 		Iterator<String> fields = metricData.fieldNames();
 		Map<String, String> tags = new HashMap<>();
-		while(fields.hasNext()) {
+		while (fields.hasNext()) {
 			String tagName = fields.next();
 			if (!tagName.equals("k") && !tagName.equals("v")) {
 				tags.put(tagName, metricData.get(tagName).textValue());
-			}			
-		}	
+			}
+		}
 		return MetricsNameHelper.getMetricKey(name, tags);
 	}
 

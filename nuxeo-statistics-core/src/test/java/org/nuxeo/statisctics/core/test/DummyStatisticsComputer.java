@@ -16,53 +16,34 @@
  * Contributors:
  *      Tiry
  */
-package org.nuxeo.statistics.custom;
+package org.nuxeo.statisctics.core.test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.nuxeo.statistics.AbstractStatisticsComputer;
 
 import io.dropwizard.metrics5.MetricName;
 
-public class CustomStatisticsComputerSample extends AbstractStatisticsComputer {
+public class DummyStatisticsComputer extends AbstractStatisticsComputer {
 
+	protected long counter = 0L;
+
+	public static final Long key = new Random().nextLong();
+	
 	@Override
 	public Map<MetricName, Long> get() {
-		
 		Map<MetricName, Long> metrics = new HashMap<>();
-		
-		metrics.putAll(computeFoo());
-		metrics.putAll(computeBar());		
-		
+		MetricName name = mkMetricName("dummy", "counter").tagged("foo", "bar");
+		metrics.put(name, counter);
+		counter++;
+	
+		MetricName name2 = mkMetricName("dummy", "key").tagged("foo", "bar");
+		metrics.put(name2, key);
+	
 		return metrics;
-	}
-
-	protected Map<MetricName, Long> computeFoo() {
-		
-		Map<MetricName, Long> metrics= new HashMap<>();
-		
-		// build name and add tags
-		MetricName name = mkMetricName("custom","foo").tagged("app","XXX");
-			
-		// fake metric computation
-		metrics.put(name, new Random().nextLong());
-		
-		return metrics;		
-	}
-
-    protected Map<MetricName, Long> computeBar() {
-		
-		Map<MetricName, Long> metrics= new HashMap<>();
-		
-		// build name and add tags
-		MetricName name = mkMetricName("custom","bar").tagged("app","XXX").tagged("domain","YYY");
-			
-		// fake metric computation
-		metrics.put(name, new Random().nextLong());
-		
-		return metrics;		
 	}
 
 }
