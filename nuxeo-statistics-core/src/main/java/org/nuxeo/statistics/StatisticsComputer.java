@@ -18,6 +18,10 @@
  */
 package org.nuxeo.statistics;
 
+import java.time.Duration;
+import java.util.Map;
+import java.util.function.Supplier;
+
 import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.common.xmap.annotation.XNode;
 import org.nuxeo.common.xmap.annotation.XObject;
@@ -26,43 +30,40 @@ import org.nuxeo.runtime.model.Descriptor;
 
 import io.dropwizard.metrics5.MetricName;
 
-import java.time.Duration;
-import java.util.Map;
-import java.util.function.Supplier;
-
 @XObject(value = "computer")
 public class StatisticsComputer implements Supplier<Map<MetricName, Long>>, Descriptor {
 
 	public static final String DEFAULT_INTERVAL_PROP_NAME = "nuxeo.statistics.computer.default.interval";
-	
-    public static final Duration DEFAULT_INTERVAL = DurationUtils.parse(Framework.getProperty(DEFAULT_INTERVAL_PROP_NAME, "1h"));
 
-    @XNode("@name")
-    public String name;
+	public static final Duration DEFAULT_INTERVAL = DurationUtils
+			.parse(Framework.getProperty(DEFAULT_INTERVAL_PROP_NAME, "1h"));
 
-    @XNode("@class")
-    public Class<? extends Supplier<Map<MetricName, Long>>> klass;
+	@XNode("@name")
+	public String name;
 
-    @XNode("@interval")
-    public Duration interval = DEFAULT_INTERVAL;
+	@XNode("@class")
+	public Class<? extends Supplier<Map<MetricName, Long>>> klass;
 
-    @XNode("@store")
-    public String store;
+	@XNode("@interval")
+	public Duration interval = DEFAULT_INTERVAL;
 
-    @Override
-    public Map<MetricName, Long> get() {
-        return supplier().get();
-    }
+	@XNode("@store")
+	public String store;
 
-    public String getId() {
-    	return name;
-    }
-    
-    protected Supplier<Map<MetricName, Long>> supplier() {
-        try {
-            return klass.getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to create statistics computer " + name, e);
-        }
-    }
+	@Override
+	public Map<MetricName, Long> get() {
+		return supplier().get();
+	}
+
+	public String getId() {
+		return name;
+	}
+
+	protected Supplier<Map<MetricName, Long>> supplier() {
+		try {
+			return klass.getDeclaredConstructor().newInstance();
+		} catch (ReflectiveOperationException e) {
+			throw new RuntimeException("Failed to create statistics computer " + name, e);
+		}
+	}
 }

@@ -21,23 +21,21 @@ package org.nuxeo.statistics;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 /**
  * @since 11.5
  */
 public interface StatisticsService {
 
 	StatisticsComputer getComputer(String name);
-	
-    List<StatisticsComputer> getComputers();
 
-    void computeStatistics(String computer);
+	List<StatisticsComputer> getComputers();
 
-    Long getStatistic(String key);
-      
-    void storeStatisticsTimeSerie(List<Map<String, Long>> tsMetrics);
-	
+	void computeStatistics(String computer);
+
+	Long getStatistic(String key);
+
+	void storeStatisticsTimeSerie(List<Map<String, Long>> tsMetrics);
+
 	String getStatisticsTimeSerieAsJson();
 
 	List<Map<String, Long>> getStatisticsTimeSerie();

@@ -21,7 +21,6 @@ package org.nuxeo.statisctics.core.test;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 import org.nuxeo.statistics.AbstractStatisticsComputer;
 

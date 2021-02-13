@@ -1,3 +1,22 @@
+/*
+ * (C) Copyright 2021 Nuxeo (http://nuxeo.com/) and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributors:
+ *      Tiry
+ */
+
 package org.nuxeo.statistics.api;
 
 import java.util.List;
@@ -50,15 +69,15 @@ public class FetchStatisticOperation {
 
 			List<Map<String, Long>> ts = Framework.getService(StatisticsService.class).getStatisticsTimeSerie();
 
-			if (ts==null || ts.size()==0) {
+			if (ts == null || ts.size() == 0) {
 				log.warn("No data available yet");
 				return "[]";
 			}
 
-			MetricsFilter mf = new MetricsFilter(filter, start, duration, maxValues);			
+			MetricsFilter mf = new MetricsFilter(filter, start, duration, maxValues);
 			List<Map<String, Long>> filtered = mf.process(ts);
 			return OBJECT_MAPPER.writer().writeValueAsString(filtered);
-			
+
 		} else {
 			return service.getStatisticsTimeSerieAsJson();
 		}

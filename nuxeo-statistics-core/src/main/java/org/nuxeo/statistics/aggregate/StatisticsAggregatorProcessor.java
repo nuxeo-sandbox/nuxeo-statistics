@@ -36,8 +36,8 @@ import org.nuxeo.runtime.stream.StreamProcessorTopology;
  */
 public class StatisticsAggregatorProcessor implements StreamProcessorTopology {
 
-    public static final String DEFAULT_INTERVAL_PROP_NAME = "nuxeo.statistics.aggregate.default.interval";	
-    
+	public static final String DEFAULT_INTERVAL_PROP_NAME = "nuxeo.statistics.aggregate.default.interval";
+
 	@Override
 	public Topology getTopology(Map<String, String> options) {
 		Topology.Builder builder = Topology.builder();
@@ -49,8 +49,8 @@ public class StatisticsAggregatorProcessor implements StreamProcessorTopology {
 
 	protected Duration getPollInterval() {
 		if (Framework.isTestModeSet()) {
-			return Duration.ofSeconds(5);
-		}	
+			return Duration.ofSeconds(2);
+		}
 		return DurationUtils.parse(Framework.getProperty(DEFAULT_INTERVAL_PROP_NAME, "5m"));
 	}
 

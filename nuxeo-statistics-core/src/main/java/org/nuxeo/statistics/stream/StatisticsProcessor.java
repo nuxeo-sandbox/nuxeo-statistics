@@ -36,14 +36,14 @@ import org.nuxeo.statistics.StatisticsService;
  */
 public class StatisticsProcessor implements StreamProcessorTopology {
 
-    @Override
-    public Topology getTopology(Map<String, String> options) {
-        Topology.Builder builder = Topology.builder();
-        StatisticsService service = Framework.getService(StatisticsService.class);
-        service.getComputers().forEach(computer -> {
-           builder.addComputation(() -> new StatisticsComputation(computer.name, computer.interval),
-                   Collections.singletonList(INPUT_1 + ":" + INPUT_NULL));
-        });
-        return builder.build();
-    }
+	@Override
+	public Topology getTopology(Map<String, String> options) {
+		Topology.Builder builder = Topology.builder();
+		StatisticsService service = Framework.getService(StatisticsService.class);
+		service.getComputers().forEach(computer -> {
+			builder.addComputation(() -> new StatisticsComputation(computer.name, computer.interval),
+					Collections.singletonList(INPUT_1 + ":" + INPUT_NULL));
+		});
+		return builder.build();
+	}
 }

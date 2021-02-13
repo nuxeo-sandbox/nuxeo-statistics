@@ -27,14 +27,12 @@ import java.util.function.Supplier;
 import io.dropwizard.metrics5.MetricName;
 
 public abstract class AbstractStatisticsComputer implements Supplier<Map<MetricName, Long>> {
- 
-	
-	
+
 	protected MetricName mkMetricName(String... parts) {
-		 List<String> p = new ArrayList<>();
-		 p.add("nuxeo");
-		 p.add("statistics");
-		 p.addAll(Arrays.asList(parts));
+		List<String> p = new ArrayList<>();
+		p.add("nuxeo");
+		p.add("statistics");
+		p.addAll(Arrays.asList(parts));
 		return MetricName.build(p.toArray(new String[p.size()]));
 	}
 

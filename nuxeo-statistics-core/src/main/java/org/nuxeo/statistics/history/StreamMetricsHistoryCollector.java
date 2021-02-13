@@ -1,8 +1,26 @@
+/*
+ * (C) Copyright 2021 Nuxeo (http://nuxeo.com/) and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributors:
+ *      Tiry
+ */
+
 package org.nuxeo.statistics.history;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import java.io.Externalizable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -22,7 +40,6 @@ import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.cluster.ClusterService;
 import org.nuxeo.runtime.codec.CodecService;
 import org.nuxeo.runtime.stream.StreamService;
-import org.nuxeo.statistics.aggregate.StatisticTSAggregateComputation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,14 +76,13 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 	protected String nodeId;
 
 	public static final String STATS_HISTORY_STREAM = "statistics/history";
-	
+
 	private static final Logger log = LogManager.getLogger(StreamMetricsHistoryCollector.class);
 
-	
 	public static Codec<Record> getCodec() {
-		return Framework.getService(CodecService.class).getCodec("avro", Record.class);	
+		return Framework.getService(CodecService.class).getCodec("avro", Record.class);
 	}
-	
+
 	public StreamMetricsHistoryCollector(MetricRegistry registry, MetricFilter filter) {
 		super(registry, "stream-stats-reporter", filter, TimeUnit.SECONDS, TimeUnit.SECONDS);
 		try {
@@ -94,7 +110,6 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 			SortedMap<MetricName, Histogram> histograms, SortedMap<MetricName, Meter> meters,
 			SortedMap<MetricName, Timer> timers) {
 
-		
 		StreamService service = Framework.getService(StreamService.class);
 		if (service == null) {
 			// stream service is not yet ready
@@ -116,37 +131,36 @@ public class StreamMetricsHistoryCollector extends ScheduledReporter {
 		ret.put("timestamp", timestamp);
 		ret.put("hostname", hostname);
 		ret.put("ip", hostIp);
-		ret.put("nodeId", getNodeId());	
+		ret.put("nodeId", getNodeId());
 		ret.set("metrics", metrics);
-		
-		if (metrics.size()==0) {
+
+		if (metrics.size() == 0) {
 			// do not store empty metric report!
 			return;
 		}
 
-		LogAppender<Record> appender=null;
-		try {			
-			
+		LogAppender<Record> appender = null;
+		try {
+
 			Name streamName = Name.ofUrn(STATS_HISTORY_STREAM);
 			Record rec = Record.of(hostIp, OBJECT_MAPPER.writer().writeValueAsString(ret).getBytes(UTF_8));
-			
-			Codec<Record> codec = getCodec();											
+
+			Codec<Record> codec = getCodec();
 			boolean created = service.getLogManager().createIfNotExists(streamName, 1);
 			if (created) {
-				log.debug("initialized log using LogManager with name " + streamName );
+				log.debug("initialized log using LogManager with name " + streamName);
 			}
-			
-			appender = service.getLogManager().getAppender(streamName, codec);						
-			appender.append(rec.getKey(), rec);	
-		
+
+			appender = service.getLogManager().getAppender(streamName, codec);
+			appender.append(rec.getKey(), rec);
+
 		} catch (JsonProcessingException e) {
 			throw new StreamRuntimeException("Cannot convert to json", e);
-		} catch (Exception e ) {
+		} catch (Exception e) {
 			e.printStackTrace();
-		} 	
+		}
 	}
 
-	
 	protected void reportTimer(ArrayNode metrics, MetricName key, Timer value) {
 		ObjectNode metric = OBJECT_MAPPER.createObjectNode();
 		metric.put("k", key.getKey());

@@ -18,16 +18,15 @@
  */
 package org.nuxeo.statistics.stream;
 
+import java.time.Duration;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.nuxeo.common.utils.DurationUtils;
 import org.nuxeo.lib.stream.computation.AbstractComputation;
 import org.nuxeo.lib.stream.computation.ComputationContext;
 import org.nuxeo.lib.stream.computation.Record;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.statistics.StatisticsService;
-
-import java.time.Duration;
 
 /**
  * Statistics computation.
@@ -36,42 +35,42 @@ import java.time.Duration;
  */
 public class StatisticsComputation extends AbstractComputation {
 
-    private static final Logger log = LogManager.getLogger(StatisticsComputation.class);
+	private static final Logger log = LogManager.getLogger(StatisticsComputation.class);
 
-    protected final String computer;
+	protected final String computer;
 
-    protected long intervalMs;
+	protected long intervalMs;
 
-    public StatisticsComputation(String computer, Duration interval) {
-        super("statistics/" + computer, 1, 0);
-        this.computer = computer;       
-        if (Framework.isTestModeSet()) {
-    		this.intervalMs = 5*1000L;
-    	} else {
-    		this.intervalMs = interval.toMillis();	
-    	}
-    }
-    
-    @Override
-    public void init(ComputationContext context) {
-        if (!context.isSpareComputation()) {
-            log.warn("Instance elected to report statistics with interval " + intervalMs);
-            context.setTimer("timer", System.currentTimeMillis() + intervalMs);
-        }
-    }
+	public StatisticsComputation(String computer, Duration interval) {
+		super("statistics/" + computer, 1, 0);
+		this.computer = computer;
+		if (Framework.isTestModeSet()) {
+			this.intervalMs = 5 * 1000L;
+		} else {
+			this.intervalMs = interval.toMillis();
+		}
+	}
 
-    @Override
-    public void processTimer(ComputationContext context, String key, long timestamp) {
-        getStatisticsService().computeStatistics(computer);
-        context.setTimer("timer", System.currentTimeMillis() + intervalMs);
-    }
+	@Override
+	public void init(ComputationContext context) {
+		if (!context.isSpareComputation()) {
+			log.warn("Instance elected to report statistics with interval " + intervalMs);
+			context.setTimer("timer", System.currentTimeMillis() + intervalMs);
+		}
+	}
 
-    @Override
-    public void processRecord(ComputationContext computationContext, String s, Record record) {
-        //
-    }
+	@Override
+	public void processTimer(ComputationContext context, String key, long timestamp) {
+		getStatisticsService().computeStatistics(computer);
+		context.setTimer("timer", System.currentTimeMillis() + intervalMs);
+	}
 
-    protected StatisticsService getStatisticsService() {
-        return Framework.getService(StatisticsService.class);
-    }
+	@Override
+	public void processRecord(ComputationContext computationContext, String s, Record record) {
+		//
+	}
+
+	protected StatisticsService getStatisticsService() {
+		return Framework.getService(StatisticsService.class);
+	}
 }

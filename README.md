@@ -20,6 +20,34 @@ For efficiency reasons, the computed metric values are cached in the KV Store so
 </td></tr>
 </table> 
 
+## Building and Deploying
+
+### Modules
+
+The project contains 5 maven modules:
+
+**`nuxeo-statistics-core`** : implement the `StatisticService` and manage the underlying infrastructure (Computations, ExtensionPoint ...).
+
+**`nuxeo-repository-statistics`** : contribute some metrics related to the Document Repository.
+
+**`custom-statistics-sample`** : Code sample to show how to contribute and tests new statistics.
+
+**`nuxeo-statistics-web-ui`** : Contribute a new "Statistics" Dashboard to WebUi.
+
+**`package`** : Generate a Nuxeo package for `nuxeo-statistics-core`, `nuxeo-repository-statistics` and `nuxeo-statistics-web-ui`.
+
+### Building
+
+Simply run :
+
+   mvn clean install
+
+`nuxeo-statistics-web-ui` requires Node.js (Tested successfully with 12).
+
+### Deploying
+
+Install the package or copy the jars in `$NXSERVER/bundles/`.
+
 ## Principles
 
 ### Computing metrics asynchronously

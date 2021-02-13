@@ -30,39 +30,36 @@ public class CustomStatisticsComputerSample extends AbstractStatisticsComputer {
 
 	@Override
 	public Map<MetricName, Long> get() {
-		
 		Map<MetricName, Long> metrics = new HashMap<>();
-		
 		metrics.putAll(computeFoo());
-		metrics.putAll(computeBar());		
-		
+		metrics.putAll(computeBar());
 		return metrics;
 	}
 
 	protected Map<MetricName, Long> computeFoo() {
-		
-		Map<MetricName, Long> metrics= new HashMap<>();
-		
-		// build name and add tags
-		MetricName name = mkMetricName("custom","foo").tagged("app","XXX");
-			
+
+		Map<MetricName, Long> metrics = new HashMap<>();
+
+		// build name
+		MetricName name = mkMetricName("custom", "foo");
+
 		// fake metric computation
 		metrics.put(name, new Random().nextLong());
-		
-		return metrics;		
+
+		return metrics;
 	}
 
-    protected Map<MetricName, Long> computeBar() {
-		
-		Map<MetricName, Long> metrics= new HashMap<>();
-		
+	protected Map<MetricName, Long> computeBar() {
+
+		Map<MetricName, Long> metrics = new HashMap<>();
+
 		// build name and add tags
-		MetricName name = mkMetricName("custom","bar").tagged("app","XXX").tagged("domain","YYY");
-			
+		MetricName name = mkMetricName("custom", "bar").tagged("repository", "default");
+
 		// fake metric computation
 		metrics.put(name, new Random().nextLong());
-		
-		return metrics;		
+
+		return metrics;
 	}
 
 }
