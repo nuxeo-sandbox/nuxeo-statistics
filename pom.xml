@@ -3,13 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.nuxeo</groupId>
-    <artifactId>nuxeo-ecm</artifactId>
-    <version>11.4-SNAPSHOT</version>
+    <artifactId>nuxeo-parent</artifactId>
+    <version>2021.0</version>
   </parent>
 
   <groupId>org.nuxeo.statistics</groupId>
   <artifactId>nuxeo-statistics</artifactId>
-  <version>11.4-SNAPSHOT</version>
+  <version>1.0-SNAPSHOT</version>
 
   <name>Nuxeo statistics</name>
   <description>Nuxeo Statistics</description>

@@ -16,7 +16,7 @@
   <production-state>testing</production-state>
   <supported>false</supported>
   <platforms>
-    <platform>server-11.*</platform>
+    <platform>lts-2021.*</platform>
   </platforms>
   <!-- Dependencies on other packages -->
   <!-- <dependencies> -->
