@@ -33,6 +33,6 @@ jobs:
         MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
         MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
     - name: Upload MP package
-          uses: wei/curl@v1
-          with:
-            args: -i -u ${{ secrets.CONNECT_LOGIN }}:${{ secrets.CONNECT_TOKEN }} -F package=@package/target/nuxeo-statistics-package-1.0-SNAPSHOT.zip "https://connect.nuxeo.com/nuxeo/site/marketplace/upload?batch=true&orgId=nuxeo"
+      uses: wei/curl@v1
+      with:
+        args: -i -u ${{ secrets.CONNECT_LOGIN }}:${{ secrets.CONNECT_TOKEN }} -F package=@package/target/nuxeo-statistics-package-1.0-SNAPSHOT.zip "https://connect.nuxeo.com/nuxeo/site/marketplace/upload?batch=true&orgId=nuxeo"
