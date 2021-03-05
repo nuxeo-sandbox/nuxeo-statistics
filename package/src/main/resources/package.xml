@@ -17,6 +17,7 @@
   <supported>false</supported>
   <platforms>
     <platform>lts-2021.*</platform>
+    <platform>11.4.*</platform>
   </platforms>
   <!-- Dependencies on other packages -->
   <!-- <dependencies> -->
